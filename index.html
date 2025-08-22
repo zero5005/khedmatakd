@@ -22,7 +22,20 @@
       --error-bg:#f8d7da;
       --status-bg:#fff9e6;
       --status-border:#ffd36b;
-      --status-btn-text: #222; /* default button text color */
+      --status-btn-text: #222;
+      /* Ads & Packages accents (light mode) */
+      --ads-accent-1: #ff7a18;
+      --ads-accent-2: #ffb199;
+      --ads-card-bg: #ffffff;
+      --ads-card-border: #e6e9ef;
+      --ads-btn-text: #ffffff;
+      --ads-meta: #4b5563;
+      --ads-preview-bg: #f8fafc;
+      --pkg-accent-1: #4f46e5;
+      --pkg-accent-2: #06b6d4;
+      --pkg-card-bg: #ffffff;
+      --pkg-card-border: #e6e9ef;
+      --pkg-text: #1f2937;
     }
 
     /* Dark theme overrides */
@@ -42,6 +55,18 @@
       --status-bg:#14202a;
       --status-border:rgba(255,215,0,0.08);
       --status-btn-text: #e6eef8;
+      --ads-accent-1: #7c3aed;
+      --ads-accent-2: #06b6d4;
+      --ads-card-bg: rgba(255,255,255,0.03);
+      --ads-card-border: rgba(255,255,255,0.04);
+      --ads-btn-text: #0f1726;
+      --ads-meta: #9fb3c8;
+      --ads-preview-bg: rgba(255,255,255,0.02);
+      --pkg-accent-1: #06b6d4;
+      --pkg-accent-2: #7c3aed;
+      --pkg-card-bg: rgba(255,255,255,0.02);
+      --pkg-card-border: rgba(255,255,255,0.04);
+      --pkg-text: #e6eef8;
     }
 
     /* ========== Base styles ========== */
@@ -134,6 +159,18 @@
       transition: transform .12s ease, box-shadow .12s ease;
       overflow: hidden;
     }
+    #adsListContainer > div:hover {
+      transform: translateY(-6px) !important;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.08) !important;
+    }
+    #adsListContainer > div h4 { margin:0 0 6px 0; font-size:1.05rem; color:var(--text-color) !important; }
+    #adsListContainer > div .meta { color: var(--ads-meta) !important; font-size:0.9rem; margin-bottom:8px; }
+    #adsListContainer > div p { color: var(--muted) !important; margin-bottom:8px; }
+    #adsListContainer > div img { width:80px !important; height:60px !important; object-fit:cover !important; border-radius:6px !important; border:1px solid rgba(0,0,0,0.04) !important; background:var(--ads-preview-bg) !important; }
+    #adsListContainer > div button { padding:8px 12px !important; border-radius:8px !important; border:none !important; cursor:pointer !important; font-weight:700 !important; }
+    #adsListContainer > div button.edit-btn { background: transparent !important; border: 1px solid rgba(0,0,0,0.06) !important; color: var(--text-color) !important; }
+    #adsListContainer > div button.delete-btn { background: linear-gradient(90deg,#ef4444,#f97316) !important; color: #fff !important; }
+
     #packagesGrid > div {
       background: var(--pkg-card-bg) !important;
       border: 1px solid var(--pkg-card-border) !important;
@@ -143,6 +180,13 @@
       box-shadow: 0 6px 18px rgba(0,0,0,0.04) !important;
       transition: transform .12s ease, box-shadow .12s ease;
     }
+    #packagesGrid > div:hover { transform: translateY(-6px) !important; box-shadow: 0 12px 30px rgba(0,0,0,0.08) !important; }
+    #packagesGrid > div h3 { margin:0 0 6px 0; color: var(--pkg-text) !important; }
+    #packagesGrid > div p { color: var(--muted) !important; }
+    #packagesGrid > div button.choose-pkg { padding:8px 12px; border-radius:8px; border:none; background: linear-gradient(90deg, var(--pkg-accent-1), var(--pkg-accent-2)); color: #fff; cursor:pointer; font-weight:700; }
+
+    body.dark #adsListContainer > div { box-shadow: 0 10px 30px rgba(0,0,0,0.6) !important; }
+    body.dark #packagesGrid > div { box-shadow: 0 10px 30px rgba(0,0,0,0.6) !important; }
 
   </style>
 </head>
@@ -154,21 +198,18 @@
         <p style="margin:4px 0 0 0;color:var(--muted)">إدارة الأماكن والإعلانات بسهولة</p>
       </div>
       <div style="display:flex;gap:8px;align-items:center;">
-        <!-- Theme toggle -->
         <button id="themeToggleBtn" class="btn" title="تبديل الوضع" style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:transparent;border:1px solid rgba(0,0,0,0.06);border-radius:8px;color:var(--text-color)">
           <i id="themeIcon" class="fas fa-moon"></i><span id="themeLabel" style="font-weight:600">الوضع الليلي</span>
         </button>
       </div>
     </div>
 
-    <!-- auth -->
     <div id="authArea">
       <button id="loginBtn" class="btn btn-secondary"><i class="fas fa-sign-in-alt"></i> تسجيل الدخول</button>
       <span id="loggedInUser" style="display:none;"></span>
       <button id="logoutBtn" class="btn btn-secondary" style="display:none;"><i class="fas fa-sign-out-alt"></i> خروج</button>
     </div>
 
-    <!-- Place status bar (shown after login) -->
     <div id="placeStatusBar" style="display:none;">
       <div class="left">
         <strong style="font-size:15px;">حالة المكان:</strong>
@@ -189,24 +230,249 @@
     </div>
 
     <div class="content">
-      <!-- The rest of the page (forms, ads, packages) -->
-      <!-- Keep your existing content here; styles above ensure readable card/button text -->
+      <!-- Places -->
       <div id="places-tab" class="tab-content">
-        <!-- place form (unchanged) -->
+        <h2><i class="fas fa-plus-circle"></i> إضافة / تعديل مكان</h2>
+        <form id="placeForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label>اسم المكان</label>
+              <input type="text" name="placeName" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label>نوع النشاط</label>
+              <select class="form-control" name="activityType" required></select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>المدينة</label>
+              <select class="form-control" name="city" required></select>
+            </div>
+            <div class="form-group">
+              <label>المنطقة</label>
+              <select class="form-control" name="area" required></select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>الموقع أو المول</label>
+              <select class="form-control" name="location"></select>
+            </div>
+            <div class="form-group">
+              <label>العنوان التفصيلي</label>
+              <input type="text" name="detailedAddress" class="form-control" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>رابط الموقع على الخريطة</label>
+              <input type="url" name="mapLink" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label>رقم التواصل</label>
+              <input type="tel" name="phone" class="form-control" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>رابط واتساب</label>
+              <input type="url" name="whatsappLink" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label>البريد الإلكتروني</label>
+              <input type="email" name="email" class="form-control" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>الموقع الإلكتروني</label>
+              <input type="url" name="website" class="form-control">
+            </div>
+            <div class="form-group">
+              <label>ساعات العمل</label>
+              <input type="text" name="workingHours" class="form-control" placeholder="مثال: 9ص - 12ص" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>خدمات التوصيل</label>
+              <select class="form-control" name="delivery" required>
+                <option value="نعم">نعم</option>
+                <option value="لا">لا</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>الباقة</label>
+              <select class="form-control" name="package" required></select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>صورة شعار أو صورة المكان</label>
+            <div class="file-upload">
+              <input type="file" id="placeImage" accept="image/*" onchange="previewImage(this,'placeImagePreview')">
+              <label for="placeImage"><i class="fas fa-cloud-upload-alt"></i><br>اضغط لاختيار صورة</label>
+            </div>
+            <div id="placeImagePreview" class="preview-images"></div>
+          </div>
+
+          <div class="form-group">
+            <label>وصف مختصر</label>
+            <textarea name="description" class="form-control" rows="3" required></textarea>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>كلمة المرور</label>
+              <input type="password" name="password" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label>حالة المكان</label>
+              <select name="status" class="form-control" required>
+                <option value="مفتوح">مفتوح</option>
+                <option value="مغلق">مغلق</option>
+                <option value="مغلق للصلاة">مغلق للصلاة</option>
+                <option value="تحت التجهيز">تحت التجهيز</option>
+              </select>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> حفظ</button>
+        </form>
       </div>
 
+      <!-- Ads -->
       <div id="ads-tab" class="tab-content" style="display:none;margin-top:6px">
-        <!-- ads content (unchanged markup) -->
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px">
+          <h2 style="margin:0"><i class="fas fa-ad"></i> إدارة الإعلانات</h2>
+          <button id="btnAddAd" class="btn ad-btn" onclick="showAddAdForm()"><i class="fas fa-plus"></i> إضافة إعلان</button>
+        </div>
+
+        <div id="adFormContainer">
+          <h3 style="margin-top:0">إضافة / تعديل إعلان</h3>
+          <form id="adForm">
+            <div class="form-row">
+              <div class="form-group">
+                <label>المكان</label>
+                <select name="placeId" class="form-control" required></select>
+              </div>
+              <div class="form-group">
+                <label>نوع الإعلان</label>
+                <select name="adType" class="form-control" required>
+                  <option value="">اختر نوع الإعلان</option>
+                  <option value="عرض">عرض</option>
+                  <option value="اعلان">إعلان</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>عنوان الإعلان</label>
+                <input type="text" name="adTitle" class="form-control" required>
+              </div>
+              <div class="form-group">
+                <label>كوبون خصم</label>
+                <input type="text" name="coupon" class="form-control">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>وصف الإعلان</label>
+              <textarea name="adDescription" class="form-control" rows="3" required></textarea>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>تاريخ البداية</label>
+                <input type="date" name="startDate" class="form-control" required>
+              </div>
+              <div class="form-group">
+                <label>تاريخ النهاية</label>
+                <input type="date" name="endDate" class="form-control" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>صور الإعلان (حتى 8 صور)</label>
+              <div class="file-upload">
+                <input type="file" id="adImages" accept="image/*" multiple onchange="previewMultipleImages(this,'adImagesPreview')">
+                <label for="adImages"><i class="fas fa-images"></i><br>اضغط لاختيار الصور (حتى 8)</label>
+              </div>
+              <div id="adImagesPreview" class="preview-images"></div>
+            </div>
+
+            <div class="form-group">
+              <label>فيديو الإعلان (اختياري)</label>
+              <div class="file-upload">
+                <input type="file" id="adVideo" accept="video/*" onchange="previewVideo(this,'adVideoPreview')">
+                <label for="adVideo"><i class="fas fa-video"></i><br>اضغط لاختيار الفيديو</label>
+              </div>
+              <div id="adVideoPreview"></div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>حالة الإعلان</label>
+                <select name="adActiveStatus" class="form-control" required>
+                  <option value="نشط">نشط</option>
+                  <option value="غير نشط">غير نشط</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>الحالة العامة</label>
+                <select name="adStatus" class="form-control" required>
+                  <option value="مفتوح">مفتوح</option>
+                  <option value="مغلق">مغلق</option>
+                </select>
+              </div>
+            </div>
+
+            <button type="submit" class="btn ad-btn"><i class="fas fa-save"></i> حفظ الإعلان</button>
+          </form>
+        </div>
+
+        <div id="adsListContainer" style="margin-top:12px"></div>
       </div>
 
+      <!-- Packages -->
       <div id="packages-tab" class="tab-content" style="display:none;margin-top:6px">
-        <!-- packages content (unchanged markup) -->
+        <h2><i class="fas fa-gift"></i> الباقات</h2>
+        <div id="packagesGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:12px"></div>
       </div>
     </div>
 
     <div class="loading" id="loading"><div class="spinner"></div><p style="color:var(--text-color)">جاري المعالجة...</p></div>
     <div class="alert alert-success" id="successAlert"><i class="fas fa-check-circle"></i> تم بنجاح</div>
     <div class="alert alert-error" id="errorAlert"><i class="fas fa-exclamation-circle"></i> حدث خطأ</div>
+  </div>
+
+  <!-- Login modal -->
+  <div id="loginModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center">
+    <div style="background:var(--card-bg);max-width:420px;width:90%;border-radius:12px;padding:18px;margin:auto;direction:rtl">
+      <h3 style="margin-bottom:10px">دخول صاحب المحل</h3>
+      <form id="loginForm">
+        <div style="margin-bottom:10px">
+          <label style="display:block;font-weight:600;margin-bottom:6px">رقم التواصل أو رقم المكان</label>
+          <input type="text" name="phoneOrId" class="form-control" placeholder="أدخل رقم التواصل أو ID المكان" required>
+        </div>
+        <div style="margin-bottom:12px">
+          <label style="display:block;font-weight:600;margin-bottom:6px">كلمة المرور</label>
+          <input type="password" name="password" class="form-control" placeholder="كلمة المرور" required>
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button type="button" id="loginCancel" class="btn btn-secondary">إلغاء</button>
+          <button type="submit" class="btn btn-primary">دخول</button>
+        </div>
+      </form>
+    </div>
   </div>
 
   <script src="script.js"></script>
