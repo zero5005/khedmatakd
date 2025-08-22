@@ -1,314 +1,3 @@
-<!-- <!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>لوحة تحكم الأماكن والإعلانات</title>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-  <style>
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;background:linear-gradient(135deg,#667eea,#764ba2);min-height:100vh;direction:rtl}
-    .container{max-width:1200px;margin:0 auto;padding:20px}
-    .header{background:rgba(255,255,255,0.95);backdrop-filter:blur(10px);border-radius:16px;padding:22px;margin-bottom:18px;text-align:center}
-    .header h1{color:#333;font-size:1.6rem;margin-bottom:6px}
-    .tabs{display:flex;background:rgba(255,255,255,0.95);border-radius:12px;padding:8px;margin-bottom:18px}
-    .tab{flex:1;padding:10px;text-align:center;cursor:pointer;border-radius:8px;transition:all .2s;color:#666;font-weight:600}
-    .tab.active{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;transform:translateY(-2px)}
-    .content{background:rgba(255,255,255,0.95);backdrop-filter:blur(8px);border-radius:12px;padding:18px}
-    .form-group{margin-bottom:12px}
-    .form-control{width:100%;padding:9px;border:2px solid #e1e5e9;border-radius:8px}
-    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
-    .btn{padding:10px 14px;border:none;border-radius:8px;font-weight:600;cursor:pointer}
-    .btn-primary{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff}
-    .btn-secondary{background:#6c757d;color:#fff}
-    .file-upload label{display:block;padding:12px;border:2px dashed #667eea;border-radius:8px;text-align:center;cursor:pointer;background:rgba(102,126,234,0.03)}
-    .preview-images{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-top:10px}
-    .preview-image img{width:100%;height:90px;object-fit:cover;border-radius:8px}
-    .loading{display:none;text-align:center;padding:16px}
-    .spinner{border:4px solid #f3f3f3;border-top:4px solid #667eea;border-radius:50%;width:36px;height:36px;animation:spin 1s linear infinite;margin:0 auto 10px}
-    @keyframes spin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
-    .alert{padding:12px;border-radius:8px;margin-top:12px;display:none}
-    .alert-success{background:#d4edda;color:#155724;border:1px solid #c3e6cb}
-    .alert-error{background:#f8d7da;color:#721c24;border:1px solid #f5c6cb}
-    @media(max-width:768px){.form-row{grid-template-columns:1fr}.tabs{flex-direction:column}}
-    #authArea{display:flex;gap:10px;align-items:center;margin-bottom:12px}
-    #loggedInUser{color:#fff;font-weight:700}
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1><i class="fas fa-store"></i> لوحة تحكم الأماكن والإعلانات</h1>
-      <p>إدارة الأماكن والإعلانات بسهولة</p>
-    </div>
-
-
-    <div id="authArea">
-      <button id="loginBtn" class="btn btn-secondary"><i class="fas fa-sign-in-alt"></i> تسجيل الدخول</button>
-      <span id="loggedInUser" style="display:none;"></span>
-      <button id="logoutBtn" class="btn btn-secondary" style="display:none;"><i class="fas fa-sign-out-alt"></i> خروج</button>
-    </div>
-
-    <div class="tabs">
-      <div id="tab-places" class="tab active" onclick="showTab('places')"><i class="fas fa-map-marker-alt"></i> إدارة الأماكن</div>
-      <div id="tab-ads" class="tab" onclick="showTab('ads')" style="display:none"><i class="fas fa-ad"></i> إدارة الإعلانات</div>
-      <div id="tab-packages" class="tab" onclick="showTab('packages')"><i class="fas fa-gift"></i> الباقات</div>
-    </div>
-
-    <div class="content">
-  
-      <div id="places-tab" class="tab-content">
-        <h2><i class="fas fa-plus-circle"></i> إضافة / تعديل مكان</h2>
-        <form id="placeForm">
-          <div class="form-row">
-            <div class="form-group">
-              <label>اسم المكان</label>
-              <input type="text" name="placeName" class="form-control" required>
-            </div>
-            <div class="form-group">
-              <label>نوع النشاط</label>
-              <select class="form-control" name="activityType" required></select>
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label>المدينة</label>
-              <select class="form-control" name="city" required></select>
-            </div>
-            <div class="form-group">
-              <label>المنطقة</label>
-              <select class="form-control" name="area" required></select>
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label>الموقع أو المول</label>
-              <select class="form-control" name="location"></select>
-            </div>
-            <div class="form-group">
-              <label>العنوان التفصيلي</label>
-              <input type="text" name="detailedAddress" class="form-control" required>
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label>رابط الموقع على الخريطة</label>
-              <input type="url" name="mapLink" class="form-control" required>
-            </div>
-            <div class="form-group">
-              <label>رقم التواصل</label>
-              <input type="tel" name="phone" class="form-control" required>
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label>رابط واتساب</label>
-              <input type="url" name="whatsappLink" class="form-control" required>
-            </div>
-            <div class="form-group">
-              <label>البريد الإلكتروني</label>
-              <input type="email" name="email" class="form-control" required>
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label>الموقع الإلكتروني</label>
-              <input type="url" name="website" class="form-control">
-            </div>
-            <div class="form-group">
-              <label>ساعات العمل</label>
-              <input type="text" name="workingHours" class="form-control" placeholder="مثال: 9ص - 12ص" required>
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label>خدمات التوصيل</label>
-              <select class="form-control" name="delivery" required>
-                <option value="نعم">نعم</option>
-                <option value="لا">لا</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>الباقة</label>
-              <select class="form-control" name="package" required></select>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label>صورة شعار أو صورة المكان</label>
-            <div class="file-upload">
-              <input type="file" id="placeImage" accept="image/*" onchange="previewImage(this,'placeImagePreview')">
-              <label for="placeImage"><i class="fas fa-cloud-upload-alt"></i><br>اضغط لاختيار صورة</label>
-            </div>
-            <div id="placeImagePreview" class="preview-images"></div>
-          </div>
-
-          <div class="form-group">
-            <label>وصف مختصر</label>
-            <textarea name="description" class="form-control" rows="3" required></textarea>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label>كلمة المرور</label>
-              <input type="password" name="password" class="form-control" required>
-            </div>
-            <div class="form-group">
-              <label>حالة المكان</label>
-              <select name="status" class="form-control" required>
-                <option value="مفتوح">مفتوح</option>
-                <option value="مغلق">مغلق</option>
-                <option value="مغلق للصلاة">مغلق للصلاة</option>
-              </select>
-            </div>
-          </div>
-
-          <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> حفظ</button>
-        </form>
-      </div>
-
-      <div id="ads-tab" class="tab-content" style="display:none;margin-top:6px">
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px">
-          <h2 style="margin:0"><i class="fas fa-ad"></i> إدارة الإعلانات</h2>
-          <button id="btnAddAd" class="btn btn-primary" onclick="showAddAdForm()"><i class="fas fa-plus"></i> إضافة إعلان</button>
-        </div>
-
-        <div id="adFormContainer">
-          <h3 style="margin-top:0">إضافة / تعديل إعلان</h3>
-          <form id="adForm">
-            <div class="form-row">
-              <div class="form-group">
-                <label>المكان</label>
-                <select name="placeId" class="form-control" required></select>
-              </div>
-              <div class="form-group">
-                <label>نوع الإعلان</label>
-                <select name="adType" class="form-control" required>
-                  <option value="">اختر نوع الإعلان</option>
-                  <option value="عرض">عرض</option>
-                  <option value="اعلان">إعلان</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="form-row">
-              <div class="form-group">
-                <label>عنوان الإعلان</label>
-                <input type="text" name="adTitle" class="form-control" required>
-              </div>
-              <div class="form-group">
-                <label>كوبون خصم</label>
-                <input type="text" name="coupon" class="form-control">
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label>وصف الإعلان</label>
-              <textarea name="adDescription" class="form-control" rows="3" required></textarea>
-            </div>
-
-            <div class="form-row">
-              <div class="form-group">
-                <label>تاريخ البداية</label>
-                <input type="date" name="startDate" class="form-control" required>
-              </div>
-              <div class="form-group">
-                <label>تاريخ النهاية</label>
-                <input type="date" name="endDate" class="form-control" required>
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label>صور الإعلان (حتى 8 صور)</label>
-              <div class="file-upload">
-                <input type="file" id="adImages" accept="image/*" multiple onchange="previewMultipleImages(this,'adImagesPreview')">
-                <label for="adImages"><i class="fas fa-images"></i><br>اضغط لاختيار الصور (حتى 8)</label>
-              </div>
-              <div id="adImagesPreview" class="preview-images"></div>
-            </div>
-
-            <div class="form-group">
-              <label>فيديو الإعلان (اختياري)</label>
-              <div class="file-upload">
-                <input type="file" id="adVideo" accept="video/*" onchange="previewVideo(this,'adVideoPreview')">
-                <label for="adVideo"><i class="fas fa-video"></i><br>اضغط لاختيار الفيديو</label>
-              </div>
-              <div id="adVideoPreview"></div>
-            </div>
-
-            <div class="form-row">
-              <div class="form-group">
-                <label>حالة الإعلان</label>
-                <select name="adActiveStatus" class="form-control" required>
-                  <option value="نشط">نشط</option>
-                  <option value="غير نشط">غير نشط</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label>الحالة العامة</label>
-                <select name="adStatus" class="form-control" required>
-                  <option value="مفتوح">مفتوح</option>
-                  <option value="مغلق">مغلق</option>
-                </select>
-              </div>
-            </div>
-
-            <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> حفظ الإعلان</button>
-          </form>
-        </div>
-
-      
-        <div id="adsListContainer" style="margin-top:12px"></div>
-      </div>
-
- 
-      <div id="packages-tab" class="tab-content" style="display:none;margin-top:6px">
-        <h2><i class="fas fa-gift"></i> الباقات</h2>
-        <div id="packagesGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:12px"></div>
-      </div>
-    </div>
-
-    <div class="loading" id="loading"><div class="spinner"></div><p style="color:#fff">جاري المعالجة...</p></div>
-    <div class="alert alert-success" id="successAlert"><i class="fas fa-check-circle"></i> تم بنجاح</div>
-    <div class="alert alert-error" id="errorAlert"><i class="fas fa-exclamation-circle"></i> حدث خطأ</div>
-  </div>
-
-
-  <div id="loginModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center">
-    <div style="background:#fff;max-width:420px;width:90%;border-radius:12px;padding:18px;margin:auto;direction:rtl">
-      <h3 style="margin-bottom:10px">دخول صاحب المحل</h3>
-      <form id="loginForm">
-        <div style="margin-bottom:10px">
-          <label style="display:block;font-weight:600;margin-bottom:6px">رقم التواصل أو رقم المكان</label>
-          <input type="text" name="phoneOrId" class="form-control" placeholder="أدخل رقم التواصل أو ID المكان" required>
-        </div>
-        <div style="margin-bottom:12px">
-          <label style="display:block;font-weight:600;margin-bottom:6px">كلمة المرور</label>
-          <input type="password" name="password" class="form-control" placeholder="كلمة المرور" required>
-        </div>
-        <div style="display:flex;gap:8px;justify-content:flex-end">
-          <button type="button" id="loginCancel" class="btn btn-secondary">إلغاء</button>
-          <button type="submit" class="btn btn-primary">دخول</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <script src="script.js"></script>
-</body>
-</html> -->
-
-
-
-
-
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -317,42 +6,85 @@
   <title>لوحة تحكم الأماكن والإعلانات</title>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
+    /* ========== CSS Variables ========== */
+    :root{
+      --bg-gradient-1:#667eea;
+      --bg-gradient-2:#764ba2;
+      --page-bg: linear-gradient(135deg,var(--bg-gradient-1),var(--bg-gradient-2));
+      --card-bg: rgba(255,255,255,0.95);
+      --text-color:#222;
+      --muted:#666;
+      --control-bg:#fff;
+      --control-border:#e1e5e9;
+      --primary-gradient: linear-gradient(135deg,#667eea,#764ba2);
+      --secondary-bg:#6c757d;
+      --success-bg:#d4edda;
+      --error-bg:#f8d7da;
+      --status-bg:#fff9e6;
+      --status-border:#ffd36b;
+    }
+
+    /* Dark theme overrides */
+    body.dark{
+      --bg-gradient-1:#0f172a;
+      --bg-gradient-2:#0b1220;
+      --page-bg: linear-gradient(135deg,var(--bg-gradient-1),var(--bg-gradient-2));
+      --card-bg: rgba(12,18,28,0.8);
+      --text-color:#e6eef8;
+      --muted:#b6c2d0;
+      --control-bg:#0f1726;
+      --control-border:#22303f;
+      --primary-gradient: linear-gradient(135deg,#0ea5a9,#0f8bff);
+      --secondary-bg:#374151;
+      --success-bg:#153b2f;
+      --error-bg:#3b1f24;
+      --status-bg:#1b2a2a;
+      --status-border:rgba(255,215,0,0.12);
+    }
+
+    /* ========== Base styles ========== */
     *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;background:linear-gradient(135deg,#667eea,#764ba2);min-height:100vh;direction:rtl}
+    body{
+      font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background:var(--page-bg);
+      min-height:100vh;
+      direction:rtl;
+      color:var(--text-color);
+    }
     .container{max-width:1200px;margin:0 auto;padding:20px}
-    .header{background:rgba(255,255,255,0.95);backdrop-filter:blur(10px);border-radius:16px;padding:22px;margin-bottom:18px;text-align:center}
-    .header h1{color:#333;font-size:1.6rem;margin-bottom:6px}
-    .tabs{display:flex;background:rgba(255,255,255,0.95);border-radius:12px;padding:8px;margin-bottom:18px}
-    .tab{flex:1;padding:10px;text-align:center;cursor:pointer;border-radius:8px;transition:all .2s;color:#666;font-weight:600}
-    .tab.active{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;transform:translateY(-2px)}
-    .content{background:rgba(255,255,255,0.95);backdrop-filter:blur(8px);border-radius:12px;padding:18px}
+    .header{background:var(--card-bg);backdrop-filter:blur(10px);border-radius:16px;padding:22px;margin-bottom:18px;text-align:center}
+    .header h1{color:var(--text-color);font-size:1.6rem;margin-bottom:6px}
+    .tabs{display:flex;background:var(--card-bg);border-radius:12px;padding:8px;margin-bottom:18px}
+    .tab{flex:1;padding:10px;text-align:center;cursor:pointer;border-radius:8px;transition:all .2s;color:var(--muted);font-weight:600}
+    .tab.active{background:var(--primary-gradient);color:#fff;transform:translateY(-2px)}
+    .content{background:var(--card-bg);backdrop-filter:blur(8px);border-radius:12px;padding:18px}
     .form-group{margin-bottom:12px}
-    .form-control{width:100%;padding:9px;border:2px solid #e1e5e9;border-radius:8px}
+    .form-control{width:100%;padding:9px;border:2px solid var(--control-border);border-radius:8px;background:var(--control-bg);color:var(--text-color)}
     .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
     .btn{padding:10px 14px;border:none;border-radius:8px;font-weight:600;cursor:pointer}
-    .btn-primary{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff}
-    .btn-secondary{background:#6c757d;color:#fff}
-    .file-upload label{display:block;padding:12px;border:2px dashed #667eea;border-radius:8px;text-align:center;cursor:pointer;background:rgba(102,126,234,0.03)}
+    .btn-primary{background:var(--primary-gradient);color:#fff}
+    .btn-secondary{background:var(--secondary-bg);color:#fff}
+    .file-upload label{display:block;padding:12px;border:2px dashed var(--bg-gradient-1);border-radius:8px;text-align:center;cursor:pointer;background:rgba(102,126,234,0.03)}
     .preview-images{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-top:10px}
     .preview-image img{width:100%;height:90px;object-fit:cover;border-radius:8px}
     .loading{display:none;text-align:center;padding:16px}
-    .spinner{border:4px solid #f3f3f3;border-top:4px solid #667eea;border-radius:50%;width:36px;height:36px;animation:spin 1s linear infinite;margin:0 auto 10px}
+    .spinner{border:4px solid rgba(255,255,255,0.08);border-top:4px solid var(--bg-gradient-1);border-radius:50%;width:36px;height:36px;animation:spin 1s linear infinite;margin:0 auto 10px}
     @keyframes spin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
     .alert{padding:12px;border-radius:8px;margin-top:12px;display:none}
-    .alert-success{background:#d4edda;color:#155724;border:1px solid #c3e6cb}
-    .alert-error{background:#f8d7da;color:#721c24;border:1px solid #f5c6cb}
+    .alert-success{background:var(--success-bg);color:#155724;border:1px solid rgba(0,0,0,0.06)}
+    .alert-error{background:var(--error-bg);color:#721c24;border:1px solid rgba(0,0,0,0.06)}
     @media(max-width:768px){.form-row{grid-template-columns:1fr}.tabs{flex-direction:column}}
     #authArea{display:flex;gap:10px;align-items:center;margin-bottom:12px}
-    #loggedInUser{color:#fff;font-weight:700}
+    #loggedInUser{color:var(--text-color);font-weight:700}
 
     /* place status bar styles (buttons) */
-    #placeStatusBar{display:none;direction:rtl;padding:12px;background:#fff9e6;border:1px solid #ffd36b;border-radius:6px;margin:12px 0}
+    #placeStatusBar{display:none;direction:rtl;padding:12px;background:var(--status-bg);border:1px solid var(--status-border);border-radius:6px;margin:12px 0}
     #placeStatusBar .left{display:flex;align-items:center;gap:12px;flex:1}
-    #placeStatusLabel{padding:6px 10px;border-radius:4px;background:#f0f0f0;min-width:80px;text-align:center}
+    #placeStatusLabel{padding:6px 10px;border-radius:4px;background:rgba(0,0,0,0.04);min-width:80px;text-align:center;color:var(--text-color)}
     #placeStatusButtons{display:flex;gap:8px;flex-wrap:wrap}
     .status-btn{
       padding:8px 12px;border-radius:8px;border:1px solid rgba(0,0,0,0.06);background:linear-gradient(180deg,#ffffff,#f3f6ff);
-      box-shadow:0 2px 6px rgba(102,126,234,0.08);cursor:pointer;color:#333;font-weight:700;transition:all .15s ease;
+      box-shadow:0 2px 6px rgba(102,126,234,0.08);cursor:pointer;color:var(--text-color);font-weight:700;transition:all .15s ease;
     }
     .status-btn:hover{transform:translateY(-2px);box-shadow:0 6px 12px rgba(102,126,234,0.12)}
     .status-btn:disabled{opacity:0.6;cursor:not-allowed;transform:none}
@@ -360,13 +92,28 @@
     .status-btn[data-status="مغلق"].active{background:linear-gradient(90deg,#dc3545,#e85a5a)}
     .status-btn[data-status="مغلق للصلاة"].active{background:linear-gradient(90deg,#ff9800,#ffb74d)}
     .status-btn[data-status="تحت التجهيز"].active{background:linear-gradient(90deg,#6c757d,#9aa0a6);color:#fff}
+
+    /* adjust controls in dark mode */
+    body.dark .status-btn{background:linear-gradient(180deg,#0b0f14,#0d1620);box-shadow:none;border:1px solid rgba(255,255,255,0.03)}
+    body.dark .status-btn:hover{transform:none;box-shadow:none}
+    body.dark .status-btn.active{box-shadow:0 6px 18px rgba(0,0,0,0.4)}
+    body.dark .file-upload label{border-color:var(--primary-gradient)}
+    body.dark .tab.active{box-shadow:0 8px 20px rgba(0,0,0,0.25)}
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="header">
-      <h1><i class="fas fa-store"></i> لوحة تحكم الأماكن والإعلانات</h1>
-      <p>إدارة الأماكن والإعلانات بسهولة</p>
+    <div class="header" style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+      <div>
+        <h1 style="margin:0"><i class="fas fa-store"></i> لوحة تحكم الأماكن والإعلانات</h1>
+        <p style="margin:4px 0 0 0;color:var(--muted)">إدارة الأماكن والإعلانات بسهولة</p>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <!-- Theme toggle -->
+        <button id="themeToggleBtn" class="btn" title="تبديل الوضع" style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:transparent;border:1px solid rgba(0,0,0,0.06);border-radius:8px;color:var(--text-color)">
+          <i id="themeIcon" class="fas fa-moon"></i><span id="themeLabel" style="font-weight:600">الوضع الليلي</span>
+        </button>
+      </div>
     </div>
 
     <!-- auth -->
@@ -387,7 +134,7 @@
           <button type="button" class="status-btn" data-status="تحت التجهيز">تحت التجهيز</button>
         </div>
       </div>
-      <div id="placeStatusMessage" style="min-width:160px;text-align:left;color:#333;font-size:0.95rem;"></div>
+      <div id="placeStatusMessage" style="min-width:160px;text-align:left;color:var(--text-color);font-size:0.95rem;"></div>
     </div>
 
     <div class="tabs">
@@ -617,14 +364,14 @@
       </div>
     </div>
 
-    <div class="loading" id="loading"><div class="spinner"></div><p style="color:#fff">جاري المعالجة...</p></div>
+    <div class="loading" id="loading"><div class="spinner"></div><p style="color:var(--text-color)">جاري المعالجة...</p></div>
     <div class="alert alert-success" id="successAlert"><i class="fas fa-check-circle"></i> تم بنجاح</div>
     <div class="alert alert-error" id="errorAlert"><i class="fas fa-exclamation-circle"></i> حدث خطأ</div>
   </div>
 
   <!-- Login modal -->
   <div id="loginModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center">
-    <div style="background:#fff;max-width:420px;width:90%;border-radius:12px;padding:18px;margin:auto;direction:rtl">
+    <div style="background:var(--card-bg);max-width:420px;width:90%;border-radius:12px;padding:18px;margin:auto;direction:rtl">
       <h3 style="margin-bottom:10px">دخول صاحب المحل</h3>
       <form id="loginForm">
         <div style="margin-bottom:10px">
