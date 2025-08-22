@@ -1,4 +1,6 @@
-// script.js — كامل الشيفرة (محدث حسب طلبك: أزرار الحالة قابلة للقراءة دائماً، بدون تأكيدات، ودعم الوضع الليلي)
+// كامل script.js — متكامل: الواجهة، الـ API، رفع ملفات، إدارة الجلسة، إدارة الإعلانات، حالة المكان بدون تأكيدات، الوضع الليلي، تحليل رابط الخريطة، وتحديد الموقع التلقائي.
+
+// عدّل هذا الرابط إلى Web App الخاص بك بعد نشر code.gs
 const API_URL = 'https://script.google.com/macros/s/AKfycbx-fMI2hsJ5LvKKh9fzd3Vidn2TeGtEbHV9Nyj2nZBy9xQk9Uy_uL-m3hrDqp1uUWAPwA/exec';
 
 let currentTab = 'places';
@@ -6,20 +8,20 @@ let uploadedImages = [];
 let uploadedVideos = [];
 let editingAdId = null;
 
-// ---------- Theme (الوضع الليلي) ----------
+/* ================= THEME (الوضع الليلي) ================= */
 const THEME_KEY = 'khedmatak_theme';
 function applyTheme(theme) {
   if (theme === 'dark') {
     document.body.classList.add('dark');
     const icon = document.getElementById('themeIcon');
     const lbl = document.getElementById('themeLabel');
-    if (icon) { icon.className = 'fas fa-sun'; }
+    if (icon) icon.className = 'fas fa-sun';
     if (lbl) lbl.textContent = 'الوضع النهاري';
   } else {
     document.body.classList.remove('dark');
     const icon = document.getElementById('themeIcon');
     const lbl = document.getElementById('themeLabel');
-    if (icon) { icon.className = 'fas fa-moon'; }
+    if (icon) icon.className = 'fas fa-moon';
     if (lbl) lbl.textContent = 'الوضع الليلي';
   }
   try { localStorage.setItem(THEME_KEY, theme || 'light'); } catch(e){}
@@ -39,7 +41,7 @@ function initTheme() {
   } catch (e) { applyTheme('light'); }
 }
 
-// ------------------ API utilities ------------------
+/* ================= API helpers ================= */
 async function apiFetch(url, opts = {}) {
   try {
     const res = await fetch(url, opts);
@@ -71,7 +73,7 @@ async function apiPost(payload) {
   }
 }
 
-// ------------------ Init ------------------
+/* ================= INIT ================= */
 document.addEventListener('DOMContentLoaded', () => {
   initializeApp();
   initTheme();
@@ -82,6 +84,9 @@ document.addEventListener('DOMContentLoaded', () => {
   loadLookupsAndPopulate();
   loadPlacesForAds();
   setupAuthUI();
+  initMapAutoLocate();      // auto-locate button and one try
+  initMapLinkAutoFill();    // parse pasted map links and reverse geocode
+
   if (typeof updateAdsTabVisibility === 'function') updateAdsTabVisibility();
 
   const stored = getLoggedPlace();
@@ -99,6 +104,7 @@ function initializeApp() {
   if (endInput) endInput.value = nextWeek.toISOString().split('T')[0];
 }
 
+/* ================= Event listeners ================= */
 function setupEventListeners() {
   const placeForm = document.getElementById('placeForm');
   const adForm = document.getElementById('adForm');
@@ -108,7 +114,7 @@ function setupEventListeners() {
   if (citySelect) citySelect.addEventListener('change', updateAreas);
 }
 
-// ------------------ Lookups & populate ------------------
+/* ================= Lookups & populate ================= */
 async function loadLookupsAndPopulate() {
   try {
     const resp = await apiFetch(`${API_URL}?action=getLookups`);
@@ -161,10 +167,7 @@ async function loadLookupsAndPopulate() {
     if (pkgGrid) {
       pkgGrid.innerHTML = '';
       (data.packages || []).forEach(p => {
-        const div = document.createElement('div');
-        div.style.background = 'var(--pkg-card-bg)';
-        div.style.padding = '12px';
-        div.style.borderRadius = '8px';
+        const div = document.createElement('div'); div.className = 'pkg-card';
         const h = document.createElement('h3'); h.textContent = p.name;
         const d = document.createElement('p'); d.textContent = `المدة: ${p.duration || (p.raw && p.raw['مدة'] ? p.raw['مدة'] : '')} يوم`;
         const desc = document.createElement('p'); desc.textContent = p.raw && p.raw['وصف الباقة'] ? p.raw['وصف الباقة'] : '';
@@ -189,7 +192,7 @@ async function loadLookupsAndPopulate() {
   }
 }
 
-// ------------------ City areas ------------------
+/* ================= City areas ================= */
 function updateAreas() {
   const citySelect = document.querySelector('select[name="city"]');
   const areaSelect = document.querySelector('select[name="area"]');
@@ -203,7 +206,7 @@ function updateAreas() {
   }
 }
 
-// ------------------ Tabs ------------------
+/* ================= Tabs ================= */
 function showTab(tabName) {
   document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -214,7 +217,7 @@ function showTab(tabName) {
   currentTab = tabName;
 }
 
-// ------------------ Previews ------------------
+/* ================= Previews ================= */
 function previewImage(input, previewId) {
   const preview = document.getElementById(previewId);
   if (!preview) return;
@@ -242,10 +245,7 @@ function previewMultipleImages(input, previewId) {
       const div = document.createElement('div'); div.className = 'preview-image';
       const img = document.createElement('img'); img.src = e.target.result;
       const removeBtn = document.createElement('button'); removeBtn.className = 'remove-image'; removeBtn.innerHTML = '×';
-      removeBtn.onclick = () => {
-        div.remove();
-        uploadedImages = uploadedImages.filter(f => f !== file);
-      };
+      removeBtn.onclick = () => { div.remove(); uploadedImages = uploadedImages.filter(f => f !== file); };
       div.appendChild(img); div.appendChild(removeBtn); preview.appendChild(div);
       uploadedImages.push(file);
     };
@@ -263,7 +263,7 @@ function previewVideo(input, previewId) {
   }
 }
 
-// ------------------ Upload helper ------------------
+/* ================= Upload helper ================= */
 async function readFileAsBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -290,7 +290,7 @@ async function uploadToGoogleDrive(file, folder, placeId = null) {
   return fileUrl;
 }
 
-// ------------------ Place submit ------------------
+/* ================= Place submit ================= */
 async function handlePlaceSubmit(ev) {
   ev.preventDefault();
   showLoading(true);
@@ -372,7 +372,7 @@ async function handlePlaceSubmit(ev) {
   } finally { showLoading(false); }
 }
 
-// ------------------ Ad submit ------------------
+/* ================= Ad submit ================= */
 async function handleAdSubmit(ev) {
   ev.preventDefault();
   showLoading(true);
@@ -471,7 +471,7 @@ async function handleAdSubmit(ev) {
   } finally { showLoading(false); }
 }
 
-// ------------------ Ads list / render / edit / delete ------------------
+/* ================= Ads list / render / edit / delete ================= */
 async function loadPlacesForAds() {
   const placeSelects = document.querySelectorAll('select[name="placeId"]');
   placeSelects.forEach(ps => { ps.innerHTML = '<option value="">اختر المكان</option>'; });
@@ -507,9 +507,7 @@ async function loadPlacesForAds() {
 
   updateAdsTabVisibilitySafely();
 }
-function updateAdsTabVisibilitySafely() {
-  if (typeof updateAdsTabVisibility === 'function') updateAdsTabVisibility();
-}
+function updateAdsTabVisibilitySafely() { if (typeof updateAdsTabVisibility === 'function') updateAdsTabVisibility(); }
 
 async function loadAdsForPlace(placeId) {
   if (!placeId) return;
@@ -519,46 +517,31 @@ async function loadAdsForPlace(placeId) {
     const json = resp.data;
     const ads = (json && json.success && json.data && json.data.ads) ? json.data.ads : (json && json.ads) ? json.ads : (json && json.data && json.data) ? json.data : [];
     renderAdsList(Array.isArray(ads) ? ads : []);
-  } catch (err) {
-    console.error('loadAdsForPlace error', err);
-  }
+  } catch (err) { console.error('loadAdsForPlace error', err); }
 }
 
 function renderAdsList(ads) {
   let c = document.getElementById('adsListContainer');
-  if (!c) {
-    const adsTab = document.getElementById('ads-tab');
-    if (!adsTab) return;
-    const div = document.createElement('div'); div.id = 'adsListContainer'; div.style.marginTop = '12px';
-    adsTab.insertBefore(div, adsTab.firstChild);
-  }
-  c = document.getElementById('adsListContainer');
+  if (!c) return;
   c.innerHTML = '';
   if (!ads || ads.length === 0) { c.innerHTML = '<p>لا توجد إعلانات حالياً لهذا المحل.</p>'; return; }
   ads.forEach(ad => {
-    const card = document.createElement('div');
-    card.className = 'ad-card';
-    // Title
+    const card = document.createElement('div'); card.className = 'ad-card';
     const h = document.createElement('h4'); h.textContent = ad.title || '(بدون عنوان)';
-    // Meta
     const meta = document.createElement('div'); meta.className = 'meta'; meta.textContent = `${ad.startDate || ''} — ${ad.endDate || ''} · الحالة: ${ad.status || ''}`;
-    // Desc
     const p = document.createElement('p'); p.textContent = ad.description || '';
     card.appendChild(h); card.appendChild(meta); card.appendChild(p);
-    // Images
     if (ad.images && ad.images.length > 0) {
       const imgs = document.createElement('div'); imgs.className = 'ad-images';
       const imagesArr = Array.isArray(ad.images) ? ad.images : (ad.images && typeof ad.images === 'string' ? JSON.parse(ad.images) : []);
       imagesArr.forEach(im => {
         const url = im && im.url ? im.url : (typeof im === 'string' ? im : '');
         if (url) {
-          const img = document.createElement('img'); img.src = url;
-          imgs.appendChild(img);
+          const img = document.createElement('img'); img.src = url; imgs.appendChild(img);
         }
       });
       card.appendChild(imgs);
     }
-    // Actions
     const actions = document.createElement('div'); actions.className = 'ad-actions';
     const editBtn = document.createElement('button'); editBtn.className = 'edit-btn'; editBtn.textContent = 'تعديل'; editBtn.onclick = () => startEditAd(ad);
     const delBtn = document.createElement('button'); delBtn.className = 'delete-btn'; delBtn.textContent = 'حذف'; delBtn.onclick = () => deleteAdConfirm(ad.id);
@@ -603,7 +586,7 @@ async function deleteAdConfirm(adId) {
   } catch (err) { console.error('deleteAd error', err); showError(err.message || 'خطأ أثناء حذف الإعلان'); }
 }
 
-// ------------------ Quota & UI toggles ------------------
+/* ================= Quota & UI toggles ================= */
 async function checkAdQuotaAndToggle(placeId) {
   try {
     if (!placeId) { const tabAds = document.getElementById('tab-ads'); if (tabAds) tabAds.style.display = 'none'; return; }
@@ -631,7 +614,7 @@ function toggleAdFormAllowed(allowed, message) {
 }
 function showAdQuotaMessage(text) { let el = document.getElementById('adQuotaSummary'); if (!el) { const container = document.getElementById('ads-tab'); if (!container) return; el = document.createElement('p'); el.id = 'adQuotaSummary'; el.style.marginTop = '8px'; el.style.color = '#333'; container.insertBefore(el, container.firstChild.nextSibling); } el.textContent = text || ''; }
 
-// ------------------ Ads tab visibility ------------------
+/* ================= Ads tab visibility ================= */
 function updateAdsTabVisibility() {
   const adsTab = document.getElementById('tab-ads');
   const logged = getLoggedPlace();
@@ -644,7 +627,7 @@ function updateAdsTabVisibility() {
   }
 }
 
-// ------------------ fetch place full object ------------------
+/* ================= fetch place full object ================= */
 async function fetchPlace(placeId) {
   if (!API_URL || !API_URL.startsWith('http')) return null;
   const payload = { action: 'getDashboard', placeId: placeId };
@@ -655,7 +638,7 @@ async function fetchPlace(placeId) {
   return (data.data && data.data.place) ? data.data.place : null;
 }
 
-// ------------------ Auth & session ------------------
+/* ================= Auth & session ================= */
 function setupAuthUI() {
   const loginBtn = document.getElementById('loginBtn');
   const logoutBtn = document.getElementById('logoutBtn');
@@ -730,7 +713,7 @@ async function tryPrefillPlaceForm(place) {
   } catch (e) { console.warn('tryPrefillPlaceForm failed', e); }
 }
 
-// ---------- select helper ----------
+/* ================= select helper ================= */
 function setSelectByValueOrText(selectEl, val) {
   if (!selectEl) return false;
   const str = (val === null || val === undefined) ? '' : String(val).trim();
@@ -758,7 +741,7 @@ function setSelectValueWhenReady(selector, val, retries = 12, interval = 200) {
   });
 }
 
-// ------------------ Small helpers ------------------
+/* ================= Small helpers ================= */
 function showSuccess(message) { const el = document.getElementById('successAlert'); if (!el) return; el.textContent = message; el.className = 'alert alert-success'; el.style.display = 'block'; setTimeout(()=>el.style.display='none',5000); }
 function showError(message) { const el = document.getElementById('errorAlert'); if (!el) return; el.textContent = message; el.className = 'alert alert-error'; el.style.display = 'block'; setTimeout(()=>el.style.display='none',6000); }
 function showLoading(show) { const el = document.getElementById('loading'); if (!el) return; el.style.display = show ? 'block' : 'none'; }
@@ -778,7 +761,7 @@ function validateFiles() {
   return true;
 }
 
-// ---------- Login ----------
+/* ================= Login ================= */
 async function handleLoginSubmit(ev) {
   ev.preventDefault();
   showLoading(true);
@@ -803,7 +786,7 @@ async function handleLoginSubmit(ev) {
 }
 function handleLogout() { setLoggedOutUI(); showSuccess('تم تسجيل الخروج'); }
 
-// ---------- choose package ----------
+/* ================= choose package ================= */
 async function choosePackageAPI(packageId) {
   const logged = getLoggedPlace();
   if (!logged || !logged.id) { showError('يجب تسجيل الدخول أولاً'); return; }
@@ -824,7 +807,7 @@ async function choosePackageAPI(packageId) {
   }
 }
 
-// ---------- Add Ad helpers: showAddAdForm & clearAdForm ----------
+/* ================= Add Ad helpers ================= */
 function showAddAdForm() {
   editingAdId = null;
   clearAdForm();
@@ -832,10 +815,7 @@ function showAddAdForm() {
   if (submitBtn) submitBtn.textContent = 'حفظ الإعلان';
   showTab('ads');
   const container = document.getElementById('adFormContainer');
-  if (container) {
-    container.style.display = 'block';
-    setTimeout(() => { container.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 80);
-  }
+  if (container) { container.style.display = 'block'; setTimeout(() => { container.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 80); }
 }
 function clearAdForm() {
   const form = document.getElementById('adForm');
@@ -848,11 +828,11 @@ function clearAdForm() {
   editingAdId = null;
 }
 
-// ------------------ Place status buttons (no confirm) ------------------
+/* ================= Place status buttons (no confirm) ================= */
 function initPlaceStatusButtons() {
   const container = document.getElementById('placeStatusButtons');
   if (!container) return;
-  // Remove previous listeners by replacing nodes
+  // remove previous event listeners by cloning
   container.querySelectorAll('.status-btn').forEach(btn => {
     const clone = btn.cloneNode(true);
     btn.parentNode.replaceChild(clone, btn);
@@ -862,8 +842,7 @@ function initPlaceStatusButtons() {
     btn.addEventListener('click', async (ev) => {
       const status = btn.dataset.status;
       if (!status) return;
-      // No confirmation — immediate update
-      await updatePlaceStatus(status, btn);
+      await updatePlaceStatus(status, btn); // no confirmation — immediate
     });
   });
 }
@@ -881,11 +860,7 @@ function showPlaceStatusBar(place) {
   const current = (place.status && String(place.status).trim() !== '') ? place.status
     : (place.raw && (place.raw['حالة المكان'] || place.raw['حالة التسجيل']) ? (place.raw['حالة المكان'] || place.raw['حالة التسجيل']) : '');
   const buttons = document.querySelectorAll('#placeStatusButtons .status-btn');
-  buttons.forEach(b => {
-    b.textContent = b.dataset.status || b.textContent;
-    b.classList.toggle('active', b.dataset.status === current);
-    b.disabled = false;
-  });
+  buttons.forEach(b => { b.textContent = b.dataset.status || b.textContent; b.classList.toggle('active', b.dataset.status === current); b.disabled = false; });
   if (msg) msg.textContent = current ? `الحالة الحالية: ${current}` : 'الحالة غير محددة';
   initPlaceStatusButtons();
 }
@@ -930,15 +905,10 @@ async function updatePlaceStatus(newStatus, btnElement = null) {
     stored.raw['حالة التسجيل'] = newStatus;
     setLoggedPlace(stored);
 
-    buttons.forEach(b => {
-      b.classList.toggle('active', b.dataset.status === newStatus);
-      b.disabled = false;
-      b.textContent = b.dataset.status || b.textContent;
-    });
+    buttons.forEach(b => { b.classList.toggle('active', b.dataset.status === newStatus); b.disabled = false; b.textContent = b.dataset.status || b.textContent; });
 
     if (btnElement && originalText !== null) btnElement.textContent = btnElement.dataset.status || originalText;
-    const msg = document.getElementById('placeStatusMessage');
-    if (msg) msg.textContent = `تم التحديث إلى: ${newStatus}`;
+    const msg = document.getElementById('placeStatusMessage'); if (msg) msg.textContent = `تم التحديث إلى: ${newStatus}`;
 
     showSuccess('تم تحديث حالة المكان');
   } catch (err) {
@@ -948,3 +918,132 @@ async function updatePlaceStatus(newStatus, btnElement = null) {
     if (btnElement && originalText !== null) btnElement.textContent = originalText;
   }
 }
+
+/* ================= Map link parsing & reverse geocode ================= */
+function parseLatLngFromMapLink(url) {
+  if (!url || typeof url !== 'string') return null;
+  try {
+    url = url.trim();
+    let m = url.match(/@(-?\d+\.\d+),\s*(-?\d+\.\d+)/);
+    if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
+    m = url.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/);
+    if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
+    m = url.match(/[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/);
+    if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
+    m = url.match(/[?&]ll=(-?\d+\.\d+),(-?\d+\.\d+)/);
+    if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
+    m = url.match(/[?&]mlat=(-?\d+\.\d+)&mlon=(-?\d+\.\d+)/);
+    if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
+    m = url.match(/#map=\d+\/(-?\d+\.\d+)\/(-?\d+\.\d+)/);
+    if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
+    m = url.match(/(-?\d+\.\d+)[, ]\s*(-?\d+\.\d+)/);
+    if (m) { const lat = parseFloat(m[1]), lng = parseFloat(m[2]); if (Math.abs(lat) <= 90 && Math.abs(lng) <= 180) return { lat, lng }; }
+    return null;
+  } catch (e) { console.warn('parseLatLngFromMapLink error', e); return null; }
+}
+
+async function reverseGeocodeNominatim(lat, lng) {
+  try {
+    const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lng)}&addressdetails=1`;
+    const res = await fetch(url, { headers: { 'Accept': 'application/json', 'User-Agent': 'Khedmatak-App/1.0 (contact@example.com)' } });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data;
+  } catch (e) { console.warn('reverseGeocodeNominatim error', e); return null; }
+}
+
+async function autoFillFromMapLink(url) {
+  if (!url || String(url).trim() === '') return;
+  const coords = parseLatLngFromMapLink(url);
+  if (!coords) return;
+  const geo = await reverseGeocodeNominatim(coords.lat, coords.lng);
+  if (!geo) return;
+  const detailed = geo.display_name || '';
+  const address = geo.address || {};
+  const detailedEl = document.querySelector('input[name="detailedAddress"]');
+  if (detailedEl && (!detailedEl.value || detailedEl.value.trim() === '')) detailedEl.value = detailed;
+  const cityCandidates = [address.city, address.town, address.village, address.county, address.state];
+  const areaCandidates = [address.suburb, address.neighbourhood, address.hamlet, address.village, address.city_district];
+  const cityVal = cityCandidates.find(Boolean);
+  const areaVal = areaCandidates.find(Boolean);
+  if (cityVal) { await setSelectValueWhenReady('select[name="city"]', cityVal); try { updateAreas(); } catch(e){} }
+  if (areaVal) { await setSelectValueWhenReady('select[name="area"]', areaVal); }
+  const msgEl = document.getElementById('placeStatusMessage'); if (msgEl) msgEl.textContent = `مأخوذ من الخريطة: ${coords.lat.toFixed(6)}, ${coords.lng.toFixed(6)}`;
+}
+
+function initMapLinkAutoFill() {
+  const mapInput = document.querySelector('input[name="mapLink"]');
+  if (!mapInput) return;
+  let timer = null;
+  const run = () => { const v = mapInput.value; if (v && v.trim() !== '') autoFillFromMapLink(v.trim()); };
+  mapInput.addEventListener('blur', run);
+  mapInput.addEventListener('input', () => { if (timer) clearTimeout(timer); timer = setTimeout(run, 900); });
+}
+
+/* ================= Auto geolocation + reverse-geocode ================= */
+function buildGoogleMapsLink(lat, lng) { return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(lat + ',' + lng)}`; }
+async function handlePositionAndFill(lat, lng) {
+  try {
+    const mapEl = document.querySelector('input[name="mapLink"]') || document.getElementById('mapLinkInput');
+    if (mapEl) {
+      mapEl.value = buildGoogleMapsLink(lat, lng);
+      try { mapEl.dispatchEvent(new Event('input', { bubbles: true })); } catch(e){}
+      try { mapEl.dispatchEvent(new Event('change', { bubbles: true })); } catch(e){}
+    }
+    const msgEl = document.getElementById('placeStatusMessage'); if (msgEl) msgEl.textContent = `الإحداثيات: ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+    const geo = await reverseGeocodeNominatim(lat, lng);
+    if (!geo) return;
+    const detailed = geo.display_name || '';
+    const address = geo.address || {};
+    const detailedEl = document.querySelector('input[name="detailedAddress"]');
+    if (detailedEl && (!detailedEl.value || detailedEl.value.trim() === '')) detailedEl.value = detailed;
+    const cityCandidates = [address.city, address.town, address.village, address.county, address.state];
+    const areaCandidates = [address.suburb, address.neighbourhood, address.hamlet, address.village, address.city_district];
+    const cityVal = cityCandidates.find(Boolean);
+    if (cityVal) { await setSelectValueWhenReady('select[name="city"]', cityVal); try { updateAreas(); } catch(e){} }
+    const areaVal = areaCandidates.find(Boolean);
+    if (areaVal) { await setSelectValueWhenReady('select[name="area"]', areaVal); }
+  } catch (e) { console.error('handlePositionAndFill error', e); }
+}
+function requestGeolocationOnce(options = { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }) {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) return reject(new Error('Geolocation not supported'));
+    navigator.geolocation.getCurrentPosition(pos => resolve(pos), err => reject(err), options);
+  });
+}
+async function attemptAutoLocate(showMessages = true) {
+  const mapInput = document.querySelector('input[name="mapLink"]') || document.getElementById('mapLinkInput');
+  if (mapInput && mapInput.value && mapInput.value.trim() !== '') return;
+  try {
+    if (showMessages) showSuccess('جاري محاولة تحديد موقعك...');
+    const pos = await requestGeolocationOnce();
+    const lat = pos.coords.latitude; const lng = pos.coords.longitude;
+    await handlePositionAndFill(lat, lng);
+    if (showMessages) showSuccess('تم تحديد الموقع وملأ الحقول تلقائياً');
+  } catch (err) {
+    console.warn('Auto locate failed:', err);
+    if (showMessages) showError('تعذر الحصول على الموقع. تأكد من منح الإذن أو اضغط "استخدم موقعي"');
+  }
+}
+function initMapAutoLocate() {
+  const btn = document.getElementById('autoLocateBtn');
+  if (btn) {
+    btn.addEventListener('click', async () => {
+      btn.disabled = true; const old = btn.textContent; btn.textContent = 'جاري تحديد الموقع...';
+      await attemptAutoLocate(true);
+      btn.disabled = false; btn.textContent = old;
+    });
+  }
+  setTimeout(() => { try { attemptAutoLocate(false); } catch(e){} }, 900);
+}
+
+/* ================= Utilities continued (status etc.) ================= */
+// showPlaceStatusBar, hidePlaceStatusBar, initPlaceStatusButtons already defined above
+
+/* ================= Remaining helpers and code.gs interactions ================= */
+// fetchPlace defined above already
+// The following helper functions are needed by loadLookups... and code.gs interaction
+
+function showAdQuotaMessage(text) { let el = document.getElementById('adQuotaSummary'); if (!el) { const container = document.getElementById('ads-tab'); if (!container) return; el = document.createElement('p'); el.id = 'adQuotaSummary'; el.style.marginTop = '8px'; el.style.color = '#333'; container.insertBefore(el, container.firstChild.nextSibling); } el.textContent = text || ''; }
+
+/* ================= End of script (you can extend or replace API_URL) ================= */
