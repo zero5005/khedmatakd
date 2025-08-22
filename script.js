@@ -1,9 +1,4 @@
-// كامل script.js (محدث):
-// - أزلت حوارات التأكيد عند تغيير حالة المكان
-// - حسّنت التعامل مع أزرار الحالة (لا تُغيّر النص داخل الزر بشكل يختفي النص)
-// - ربطت تبديل الوضع الليلي كما كان مفعلًا سابقًا
-// - فرضت أن نص الأزرار يبقى واضحًا (CSS يتحكم في اللون)، ولمسنا فقط الجافاسكربت اللازمة
-
+// script.js — كامل الشيفرة (محدث حسب طلبك: أزرار الحالة قابلة للقراءة دائماً، بدون تأكيدات، ودعم الوضع الليلي)
 const API_URL = 'https://script.google.com/macros/s/AKfycbx-fMI2hsJ5LvKKh9fzd3Vidn2TeGtEbHV9Nyj2nZBy9xQk9Uy_uL-m3hrDqp1uUWAPwA/exec';
 
 let currentTab = 'places';
@@ -11,7 +6,7 @@ let uploadedImages = [];
 let uploadedVideos = [];
 let editingAdId = null;
 
-// Theme
+// ---------- Theme (الوضع الليلي) ----------
 const THEME_KEY = 'khedmatak_theme';
 function applyTheme(theme) {
   if (theme === 'dark') {
@@ -44,117 +39,7 @@ function initTheme() {
   } catch (e) { applyTheme('light'); }
 }
 
-// ------------------ Status buttons (no confirmation) ------------------
-function initPlaceStatusButtons() {
-  const container = document.getElementById('placeStatusButtons');
-  if (!container) return;
-  container.querySelectorAll('.status-btn').forEach(btn => {
-    // remove any previous listeners to avoid duplicates
-    btn.replaceWith(btn.cloneNode(true));
-  });
-  // re-query after cloning
-  const buttons = document.querySelectorAll('#placeStatusButtons .status-btn');
-  buttons.forEach(btn => {
-    btn.addEventListener('click', async (ev) => {
-      const status = btn.dataset.status;
-      if (!status) return;
-      // NO confirmation dialog (user requested no confirmations)
-      await updatePlaceStatus(status, btn);
-    });
-  });
-}
-
-function showPlaceStatusBar(place) {
-  const bar = document.getElementById('placeStatusBar');
-  const msg = document.getElementById('placeStatusMessage');
-  if (!bar) return;
-  if (!place || !place.id) {
-    bar.style.display = 'none';
-    if (msg) msg.textContent = '';
-    return;
-  }
-  bar.style.display = 'block';
-  const current = (place.status && String(place.status).trim() !== '') ? place.status
-    : (place.raw && (place.raw['حالة المكان'] || place.raw['حالة التسجيل']) ? (place.raw['حالة المكان'] || place.raw['حالة التسجيل']) : '');
-  const buttons = document.querySelectorAll('#placeStatusButtons .status-btn');
-  buttons.forEach(b => {
-    // ensure button text visible (restore dataset text) and set active
-    b.textContent = b.dataset.status || b.textContent;
-    b.classList.toggle('active', b.dataset.status === current);
-    b.disabled = false;
-  });
-  if (msg) msg.textContent = current ? `الحالة الحالية: ${current}` : 'الحالة غير محددة';
-  initPlaceStatusButtons();
-}
-
-function hidePlaceStatusBar() {
-  const bar = document.getElementById('placeStatusBar');
-  const msg = document.getElementById('placeStatusMessage');
-  if (bar) bar.style.display = 'none';
-  if (msg) msg.textContent = '';
-}
-
-async function updatePlaceStatus(newStatus, btnElement = null) {
-  try {
-    const logged = getLoggedPlace();
-    const placeId = (logged && logged.id) ? logged.id : (logged && logged.placeId) ? logged.placeId : null;
-    if (!placeId) throw new Error('لا يوجد مكان مسجّل للدخول');
-
-    // if status unchanged, do nothing
-    const current = (logged && logged.status) ? logged.status : (logged && logged.raw && (logged.raw['حالة المكان'] || logged.raw['حالة التسجيل']) ? (logged.raw['حالة المكان'] || logged.raw['حالة التسجيل']) : '');
-    if (String(current) === String(newStatus)) {
-      // still ensure UI reflects it
-      document.querySelectorAll('#placeStatusButtons .status-btn').forEach(b => b.classList.toggle('active', b.dataset.status === newStatus));
-      const msg = document.getElementById('placeStatusMessage');
-      if (msg) msg.textContent = `الحالة: ${newStatus}`;
-      return;
-    }
-
-    const buttons = document.querySelectorAll('#placeStatusButtons .status-btn');
-    buttons.forEach(b => b.disabled = true);
-
-    // keep original text (we will restore it)
-    const originalText = btnElement ? btnElement.textContent : null;
-    if (btnElement) btnElement.textContent = 'جاري الحفظ...';
-
-    const payload = { action: 'updatePlace', placeId: placeId, status: newStatus };
-    const resp = await apiPost(payload);
-    if (!resp.ok) throw new Error('فشل في التواصل مع الخادم');
-    const data = resp.data;
-    if (!data || data.success === false) throw new Error((data && data.error) ? data.error : 'استجابة غير متوقعة');
-
-    // update local session
-    const stored = getLoggedPlace() || {};
-    stored.status = newStatus;
-    if (!stored.raw) stored.raw = {};
-    stored.raw['حالة المكان'] = newStatus;
-    stored.raw['حالة التسجيل'] = newStatus;
-    setLoggedPlace(stored);
-
-    // update UI
-    buttons.forEach(b => {
-      b.classList.toggle('active', b.dataset.status === newStatus);
-      b.disabled = false;
-      // ensure the text shows the label
-      b.textContent = b.dataset.status || b.textContent;
-    });
-
-    if (btnElement) btnElement.textContent = btnElement.dataset.status || originalText;
-    const msg = document.getElementById('placeStatusMessage');
-    if (msg) msg.textContent = `تم التحديث إلى: ${newStatus}`;
-
-    showSuccess('تم تحديث حالة المكان');
-  } catch (err) {
-    console.error('updatePlaceStatus error', err);
-    showError(err.message || 'فشل تحديث حالة المكان');
-    // re-enable buttons and restore text
-    document.querySelectorAll('#placeStatusButtons .status-btn').forEach(b => { b.disabled = false; b.textContent = b.dataset.status || b.textContent; });
-    if (btnElement && typeof originalText !== 'undefined' && originalText !== null) btnElement.textContent = originalText;
-  }
-}
-
-
-// ------------------ API helpers ------------------
+// ------------------ API utilities ------------------
 async function apiFetch(url, opts = {}) {
   try {
     const res = await fetch(url, opts);
@@ -186,8 +71,7 @@ async function apiPost(payload) {
   }
 }
 
-
-// ------------------ Initialization & remaining functions (kept as in your existing script) ------------------
+// ------------------ Init ------------------
 document.addEventListener('DOMContentLoaded', () => {
   initializeApp();
   initTheme();
@@ -215,7 +99,6 @@ function initializeApp() {
   if (endInput) endInput.value = nextWeek.toISOString().split('T')[0];
 }
 
-// ------------------ Event listeners ------------------
 function setupEventListeners() {
   const placeForm = document.getElementById('placeForm');
   const adForm = document.getElementById('adForm');
@@ -278,11 +161,14 @@ async function loadLookupsAndPopulate() {
     if (pkgGrid) {
       pkgGrid.innerHTML = '';
       (data.packages || []).forEach(p => {
-        const div = document.createElement('div'); div.style.background = '#fff'; div.style.padding = '12px'; div.style.borderRadius = '8px';
+        const div = document.createElement('div');
+        div.style.background = 'var(--pkg-card-bg)';
+        div.style.padding = '12px';
+        div.style.borderRadius = '8px';
         const h = document.createElement('h3'); h.textContent = p.name;
         const d = document.createElement('p'); d.textContent = `المدة: ${p.duration || (p.raw && p.raw['مدة'] ? p.raw['مدة'] : '')} يوم`;
         const desc = document.createElement('p'); desc.textContent = p.raw && p.raw['وصف الباقة'] ? p.raw['وصف الباقة'] : '';
-        const btn = document.createElement('button'); btn.className = 'btn btn-primary'; btn.textContent = 'اختر الباقة';
+        const btn = document.createElement('button'); btn.className = 'choose-pkg'; btn.textContent = 'اختر الباقة';
         btn.onclick = () => choosePackageAPI(p.id);
         div.appendChild(h); div.appendChild(d); if (desc.textContent) div.appendChild(desc); div.appendChild(btn);
         pkgGrid.appendChild(div);
@@ -650,27 +536,32 @@ function renderAdsList(ads) {
   c.innerHTML = '';
   if (!ads || ads.length === 0) { c.innerHTML = '<p>لا توجد إعلانات حالياً لهذا المحل.</p>'; return; }
   ads.forEach(ad => {
-    const card = document.createElement('div'); card.style.border = '1px solid #e1e5e9'; card.style.padding = '10px'; card.style.borderRadius = '8px'; card.style.marginBottom = '10px'; card.style.background = '#fff';
+    const card = document.createElement('div');
+    card.className = 'ad-card';
+    // Title
     const h = document.createElement('h4'); h.textContent = ad.title || '(بدون عنوان)';
-    const meta = document.createElement('div'); meta.style.color = '#666'; meta.style.fontSize = '0.9em';
-    meta.textContent = `${ad.startDate || ''} — ${ad.endDate || ''} · الحالة: ${ad.status || ''}`;
+    // Meta
+    const meta = document.createElement('div'); meta.className = 'meta'; meta.textContent = `${ad.startDate || ''} — ${ad.endDate || ''} · الحالة: ${ad.status || ''}`;
+    // Desc
     const p = document.createElement('p'); p.textContent = ad.description || '';
     card.appendChild(h); card.appendChild(meta); card.appendChild(p);
+    // Images
     if (ad.images && ad.images.length > 0) {
-      const imgs = document.createElement('div'); imgs.style.display = 'flex'; imgs.style.gap = '6px'; imgs.style.marginTop = '8px';
-      (Array.isArray(ad.images) ? ad.images : (ad.images && typeof ad.images === 'string' ? JSON.parse(ad.images) : [])).forEach(im => {
+      const imgs = document.createElement('div'); imgs.className = 'ad-images';
+      const imagesArr = Array.isArray(ad.images) ? ad.images : (ad.images && typeof ad.images === 'string' ? JSON.parse(ad.images) : []);
+      imagesArr.forEach(im => {
         const url = im && im.url ? im.url : (typeof im === 'string' ? im : '');
         if (url) {
-          const img = document.createElement('img');
-          img.src = url; img.style.width = '80px'; img.style.height = '60px'; img.style.objectFit = 'cover'; img.style.borderRadius = '6px';
+          const img = document.createElement('img'); img.src = url;
           imgs.appendChild(img);
         }
       });
       card.appendChild(imgs);
     }
-    const actions = document.createElement('div'); actions.style.display = 'flex'; actions.style.gap = '8px'; actions.style.marginTop = '10px';
-    const editBtn = document.createElement('button'); editBtn.className = 'btn btn-secondary'; editBtn.textContent = 'تعديل'; editBtn.onclick = () => startEditAd(ad);
-    const delBtn = document.createElement('button'); delBtn.className = 'btn btn-secondary'; delBtn.style.background = '#dc3545'; delBtn.style.color = '#fff'; delBtn.textContent = 'حذف'; delBtn.onclick = () => deleteAdConfirm(ad.id);
+    // Actions
+    const actions = document.createElement('div'); actions.className = 'ad-actions';
+    const editBtn = document.createElement('button'); editBtn.className = 'edit-btn'; editBtn.textContent = 'تعديل'; editBtn.onclick = () => startEditAd(ad);
+    const delBtn = document.createElement('button'); delBtn.className = 'delete-btn'; delBtn.textContent = 'حذف'; delBtn.onclick = () => deleteAdConfirm(ad.id);
     actions.appendChild(editBtn); actions.appendChild(delBtn);
     card.appendChild(actions);
     c.appendChild(card);
@@ -955,4 +846,105 @@ function clearAdForm() {
   const ip = document.getElementById('adImagesPreview'); if (ip) ip.innerHTML = '';
   const vp = document.getElementById('adVideoPreview'); if (vp) vp.innerHTML = '';
   editingAdId = null;
+}
+
+// ------------------ Place status buttons (no confirm) ------------------
+function initPlaceStatusButtons() {
+  const container = document.getElementById('placeStatusButtons');
+  if (!container) return;
+  // Remove previous listeners by replacing nodes
+  container.querySelectorAll('.status-btn').forEach(btn => {
+    const clone = btn.cloneNode(true);
+    btn.parentNode.replaceChild(clone, btn);
+  });
+  const buttons = document.querySelectorAll('#placeStatusButtons .status-btn');
+  buttons.forEach(btn => {
+    btn.addEventListener('click', async (ev) => {
+      const status = btn.dataset.status;
+      if (!status) return;
+      // No confirmation — immediate update
+      await updatePlaceStatus(status, btn);
+    });
+  });
+}
+
+function showPlaceStatusBar(place) {
+  const bar = document.getElementById('placeStatusBar');
+  const msg = document.getElementById('placeStatusMessage');
+  if (!bar) return;
+  if (!place || !place.id) {
+    bar.style.display = 'none';
+    if (msg) msg.textContent = '';
+    return;
+  }
+  bar.style.display = 'block';
+  const current = (place.status && String(place.status).trim() !== '') ? place.status
+    : (place.raw && (place.raw['حالة المكان'] || place.raw['حالة التسجيل']) ? (place.raw['حالة المكان'] || place.raw['حالة التسجيل']) : '');
+  const buttons = document.querySelectorAll('#placeStatusButtons .status-btn');
+  buttons.forEach(b => {
+    b.textContent = b.dataset.status || b.textContent;
+    b.classList.toggle('active', b.dataset.status === current);
+    b.disabled = false;
+  });
+  if (msg) msg.textContent = current ? `الحالة الحالية: ${current}` : 'الحالة غير محددة';
+  initPlaceStatusButtons();
+}
+
+function hidePlaceStatusBar() {
+  const bar = document.getElementById('placeStatusBar');
+  const msg = document.getElementById('placeStatusMessage');
+  if (bar) bar.style.display = 'none';
+  if (msg) msg.textContent = '';
+}
+
+async function updatePlaceStatus(newStatus, btnElement = null) {
+  let originalText = null;
+  try {
+    const logged = getLoggedPlace();
+    const placeId = (logged && logged.id) ? logged.id : (logged && logged.placeId) ? logged.placeId : null;
+    if (!placeId) throw new Error('لا يوجد مكان مسجّل للدخول');
+
+    const current = (logged && logged.status) ? logged.status : (logged && logged.raw && (logged.raw['حالة المكان'] || logged.raw['حالة التسجيل']) ? (logged.raw['حالة المكان'] || logged.raw['حالة التسجيل']) : '');
+    if (String(current) === String(newStatus)) {
+      document.querySelectorAll('#placeStatusButtons .status-btn').forEach(b => b.classList.toggle('active', b.dataset.status === newStatus));
+      const msg = document.getElementById('placeStatusMessage');
+      if (msg) msg.textContent = `الحالة: ${newStatus}`;
+      return;
+    }
+
+    const buttons = document.querySelectorAll('#placeStatusButtons .status-btn');
+    buttons.forEach(b => b.disabled = true);
+
+    if (btnElement) { originalText = btnElement.textContent; btnElement.textContent = 'جاري الحفظ...'; }
+
+    const payload = { action: 'updatePlace', placeId: placeId, status: newStatus };
+    const resp = await apiPost(payload);
+    if (!resp.ok) throw new Error('فشل في التواصل مع الخادم');
+    const data = resp.data;
+    if (!data || data.success === false) throw new Error((data && data.error) ? data.error : 'استجابة غير متوقعة');
+
+    const stored = getLoggedPlace() || {};
+    stored.status = newStatus;
+    if (!stored.raw) stored.raw = {};
+    stored.raw['حالة المكان'] = newStatus;
+    stored.raw['حالة التسجيل'] = newStatus;
+    setLoggedPlace(stored);
+
+    buttons.forEach(b => {
+      b.classList.toggle('active', b.dataset.status === newStatus);
+      b.disabled = false;
+      b.textContent = b.dataset.status || b.textContent;
+    });
+
+    if (btnElement && originalText !== null) btnElement.textContent = btnElement.dataset.status || originalText;
+    const msg = document.getElementById('placeStatusMessage');
+    if (msg) msg.textContent = `تم التحديث إلى: ${newStatus}`;
+
+    showSuccess('تم تحديث حالة المكان');
+  } catch (err) {
+    console.error('updatePlaceStatus error', err);
+    showError(err.message || 'فشل تحديث حالة المكان');
+    document.querySelectorAll('#placeStatusButtons .status-btn').forEach(b => { b.disabled = false; b.textContent = b.dataset.status || b.textContent; });
+    if (btnElement && originalText !== null) btnElement.textContent = originalText;
+  }
 }
