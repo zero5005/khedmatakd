@@ -309,23 +309,6 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -361,11 +344,22 @@
     @media(max-width:768px){.form-row{grid-template-columns:1fr}.tabs{flex-direction:column}}
     #authArea{display:flex;gap:10px;align-items:center;margin-bottom:12px}
     #loggedInUser{color:#fff;font-weight:700}
-    /* place status bar styles */
-    #placeStatusBar{display:none;direction:rtl;padding:12px;background:#fff9e6;border:1px solid #ffd36b;border-radius:6px;margin:12px 0;align-items:center;gap:12px;justify-content:space-between}
+
+    /* place status bar styles (buttons) */
+    #placeStatusBar{display:none;direction:rtl;padding:12px;background:#fff9e6;border:1px solid #ffd36b;border-radius:6px;margin:12px 0}
     #placeStatusBar .left{display:flex;align-items:center;gap:12px;flex:1}
     #placeStatusLabel{padding:6px 10px;border-radius:4px;background:#f0f0f0;min-width:80px;text-align:center}
-    #placeStatusSelect{padding:6px 8px;display:none}
+    #placeStatusButtons{display:flex;gap:8px;flex-wrap:wrap}
+    .status-btn{
+      padding:8px 12px;border-radius:8px;border:1px solid rgba(0,0,0,0.06);background:linear-gradient(180deg,#ffffff,#f3f6ff);
+      box-shadow:0 2px 6px rgba(102,126,234,0.08);cursor:pointer;color:#333;font-weight:700;transition:all .15s ease;
+    }
+    .status-btn:hover{transform:translateY(-2px);box-shadow:0 6px 12px rgba(102,126,234,0.12)}
+    .status-btn:disabled{opacity:0.6;cursor:not-allowed;transform:none}
+    .status-btn.active{background:linear-gradient(90deg,#28a745,#2ec27e);color:#fff;border-color:transparent;box-shadow:0 6px 18px rgba(46,194,126,0.18)}
+    .status-btn[data-status="مغلق"].active{background:linear-gradient(90deg,#dc3545,#e85a5a)}
+    .status-btn[data-status="مغلق للصلاة"].active{background:linear-gradient(90deg,#ff9800,#ffb74d)}
+    .status-btn[data-status="تحت التجهيز"].active{background:linear-gradient(90deg,#6c757d,#9aa0a6);color:#fff}
   </style>
 </head>
 <body>
@@ -382,26 +376,18 @@
       <button id="logoutBtn" class="btn btn-secondary" style="display:none;"><i class="fas fa-sign-out-alt"></i> خروج</button>
     </div>
 
-    <!-- Place status bar (shown after login) -->
+    <!-- Place status bar (shown after login) - زرّات حالة جذابة -->
     <div id="placeStatusBar" style="display:none;">
       <div class="left">
         <strong style="font-size:15px;">حالة المكان:</strong>
-        <span id="placeStatusLabel">—</span>
-        <select id="placeStatusSelect">
-          <option value="">اختر الحالة</option>
-          <option value="مفتوح">مفتوح</option>
-          <option value="مغلق">مغلق</option>
-          <option value="مغلق للصلاة">مغلق للصلاة</option>
-          <option value="قيد المراجعة">قيد المراجعة</option>
-          <option value="معلق">معلق</option>
-          <option value="مخفي">مخفي</option>
-        </select>
+        <div id="placeStatusButtons">
+          <button type="button" class="status-btn" data-status="مفتوح">مفتوح</button>
+          <button type="button" class="status-btn" data-status="مغلق">مغلق</button>
+          <button type="button" class="status-btn" data-status="مغلق للصلاة">مغلق للصلاة</button>
+          <button type="button" class="status-btn" data-status="تحت التجهيز">تحت التجهيز</button>
+        </div>
       </div>
-      <div style="display:flex;gap:8px;">
-        <button id="editStatusBtn" class="btn">تعديل</button>
-        <button id="saveStatusBtn" class="btn" style="display:none;background:#28a745;color:#fff;">حفظ</button>
-        <button id="cancelStatusBtn" class="btn" style="display:none;background:#ccc;">إلغاء</button>
-      </div>
+      <div id="placeStatusMessage" style="min-width:160px;text-align:left;color:#333;font-size:0.95rem;"></div>
     </div>
 
     <div class="tabs">
@@ -520,6 +506,7 @@
                 <option value="مفتوح">مفتوح</option>
                 <option value="مغلق">مغلق</option>
                 <option value="مغلق للصلاة">مغلق للصلاة</option>
+                <option value="تحت التجهيز">تحت التجهيز</option>
               </select>
             </div>
           </div>
