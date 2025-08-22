@@ -1,5 +1,9 @@
-// Main frontend script (complete)
-// API URL: عدّل إن احتجت إلى رابط Web App الخاص بك
+// كامل script.js (محدث):
+// - أزلت حوارات التأكيد عند تغيير حالة المكان
+// - حسّنت التعامل مع أزرار الحالة (لا تُغيّر النص داخل الزر بشكل يختفي النص)
+// - ربطت تبديل الوضع الليلي كما كان مفعلًا سابقًا
+// - فرضت أن نص الأزرار يبقى واضحًا (CSS يتحكم في اللون)، ولمسنا فقط الجافاسكربت اللازمة
+
 const API_URL = 'https://script.google.com/macros/s/AKfycbx-fMI2hsJ5LvKKh9fzd3Vidn2TeGtEbHV9Nyj2nZBy9xQk9Uy_uL-m3hrDqp1uUWAPwA/exec';
 
 let currentTab = 'places';
@@ -7,8 +11,8 @@ let uploadedImages = [];
 let uploadedVideos = [];
 let editingAdId = null;
 
-// ---------- Theme (الوضع الليلي) ----------
-const THEME_KEY = 'khedmatak_theme'; // 'dark' or 'light'
+// Theme
+const THEME_KEY = 'khedmatak_theme';
 function applyTheme(theme) {
   if (theme === 'dark') {
     document.body.classList.add('dark');
@@ -27,8 +31,7 @@ function applyTheme(theme) {
 }
 function toggleTheme() {
   const cur = (localStorage.getItem(THEME_KEY) === 'dark') ? 'dark' : 'light';
-  const next = (cur === 'dark') ? 'light' : 'dark';
-  applyTheme(next);
+  applyTheme(cur === 'dark' ? 'light' : 'dark');
 }
 function initTheme() {
   try {
@@ -38,21 +41,24 @@ function initTheme() {
       const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
       applyTheme(prefersDark ? 'dark' : 'light');
     }
-  } catch (e) {
-    applyTheme('light');
-  }
+  } catch (e) { applyTheme('light'); }
 }
 
-// ------------------ Place status buttons init & update ------------------
+// ------------------ Status buttons (no confirmation) ------------------
 function initPlaceStatusButtons() {
   const container = document.getElementById('placeStatusButtons');
   if (!container) return;
   container.querySelectorAll('.status-btn').forEach(btn => {
+    // remove any previous listeners to avoid duplicates
+    btn.replaceWith(btn.cloneNode(true));
+  });
+  // re-query after cloning
+  const buttons = document.querySelectorAll('#placeStatusButtons .status-btn');
+  buttons.forEach(btn => {
     btn.addEventListener('click', async (ev) => {
       const status = btn.dataset.status;
       if (!status) return;
-      const ok = confirm(`هل تريد تغيير حالة المكان إلى: "${status}"؟`);
-      if (!ok) return;
+      // NO confirmation dialog (user requested no confirmations)
       await updatePlaceStatus(status, btn);
     });
   });
@@ -72,6 +78,8 @@ function showPlaceStatusBar(place) {
     : (place.raw && (place.raw['حالة المكان'] || place.raw['حالة التسجيل']) ? (place.raw['حالة المكان'] || place.raw['حالة التسجيل']) : '');
   const buttons = document.querySelectorAll('#placeStatusButtons .status-btn');
   buttons.forEach(b => {
+    // ensure button text visible (restore dataset text) and set active
+    b.textContent = b.dataset.status || b.textContent;
     b.classList.toggle('active', b.dataset.status === current);
     b.disabled = false;
   });
@@ -92,8 +100,20 @@ async function updatePlaceStatus(newStatus, btnElement = null) {
     const placeId = (logged && logged.id) ? logged.id : (logged && logged.placeId) ? logged.placeId : null;
     if (!placeId) throw new Error('لا يوجد مكان مسجّل للدخول');
 
+    // if status unchanged, do nothing
+    const current = (logged && logged.status) ? logged.status : (logged && logged.raw && (logged.raw['حالة المكان'] || logged.raw['حالة التسجيل']) ? (logged.raw['حالة المكان'] || logged.raw['حالة التسجيل']) : '');
+    if (String(current) === String(newStatus)) {
+      // still ensure UI reflects it
+      document.querySelectorAll('#placeStatusButtons .status-btn').forEach(b => b.classList.toggle('active', b.dataset.status === newStatus));
+      const msg = document.getElementById('placeStatusMessage');
+      if (msg) msg.textContent = `الحالة: ${newStatus}`;
+      return;
+    }
+
     const buttons = document.querySelectorAll('#placeStatusButtons .status-btn');
     buttons.forEach(b => b.disabled = true);
+
+    // keep original text (we will restore it)
     const originalText = btnElement ? btnElement.textContent : null;
     if (btnElement) btnElement.textContent = 'جاري الحفظ...';
 
@@ -103,6 +123,7 @@ async function updatePlaceStatus(newStatus, btnElement = null) {
     const data = resp.data;
     if (!data || data.success === false) throw new Error((data && data.error) ? data.error : 'استجابة غير متوقعة');
 
+    // update local session
     const stored = getLoggedPlace() || {};
     stored.status = newStatus;
     if (!stored.raw) stored.raw = {};
@@ -110,11 +131,15 @@ async function updatePlaceStatus(newStatus, btnElement = null) {
     stored.raw['حالة التسجيل'] = newStatus;
     setLoggedPlace(stored);
 
+    // update UI
     buttons.forEach(b => {
       b.classList.toggle('active', b.dataset.status === newStatus);
-      if (b !== btnElement) b.disabled = false;
+      b.disabled = false;
+      // ensure the text shows the label
+      b.textContent = b.dataset.status || b.textContent;
     });
-    if (btnElement) btnElement.textContent = btnElement.dataset.status || 'تم';
+
+    if (btnElement) btnElement.textContent = btnElement.dataset.status || originalText;
     const msg = document.getElementById('placeStatusMessage');
     if (msg) msg.textContent = `تم التحديث إلى: ${newStatus}`;
 
@@ -122,12 +147,14 @@ async function updatePlaceStatus(newStatus, btnElement = null) {
   } catch (err) {
     console.error('updatePlaceStatus error', err);
     showError(err.message || 'فشل تحديث حالة المكان');
-    document.querySelectorAll('#placeStatusButtons .status-btn').forEach(b => { b.disabled = false; });
-    if (btnElement && originalText !== null) btnElement.textContent = originalText;
+    // re-enable buttons and restore text
+    document.querySelectorAll('#placeStatusButtons .status-btn').forEach(b => { b.disabled = false; b.textContent = b.dataset.status || b.textContent; });
+    if (btnElement && typeof originalText !== 'undefined' && originalText !== null) btnElement.textContent = originalText;
   }
 }
 
-// ------------------ API utilities ------------------
+
+// ------------------ API helpers ------------------
 async function apiFetch(url, opts = {}) {
   try {
     const res = await fetch(url, opts);
@@ -159,7 +186,8 @@ async function apiPost(payload) {
   }
 }
 
-// ------------------ Init ------------------
+
+// ------------------ Initialization & remaining functions (kept as in your existing script) ------------------
 document.addEventListener('DOMContentLoaded', () => {
   initializeApp();
   initTheme();
