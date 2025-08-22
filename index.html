@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>لوحة تحكم الأماكن والإعلانات</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;background:linear-gradient(135deg,#667eea,#764ba2);min-height:100vh;direction:rtl}
+    .container{max-width:1200px;margin:0 auto;padding:20px}
+    .header{background:rgba(255,255,255,0.95);backdrop-filter:blur(10px);border-radius:16px;padding:22px;margin-bottom:18px;text-align:center}
+    .header h1{color:#333;font-size:1.6rem;margin-bottom:6px}
+    .tabs{display:flex;background:rgba(255,255,255,0.95);border-radius:12px;padding:8px;margin-bottom:18px}
+    .tab{flex:1;padding:10px;text-align:center;cursor:pointer;border-radius:8px;transition:all .2s;color:#666;font-weight:600}
+    .tab.active{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;transform:translateY(-2px)}
+    .content{background:rgba(255,255,255,0.95);backdrop-filter:blur(8px);border-radius:12px;padding:18px}
+    .form-group{margin-bottom:12px}
+    .form-control{width:100%;padding:9px;border:2px solid #e1e5e9;border-radius:8px}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+    .btn{padding:10px 14px;border:none;border-radius:8px;font-weight:600;cursor:pointer}
+    .btn-primary{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff}
+    .btn-secondary{background:#6c757d;color:#fff}
+    .file-upload label{display:block;padding:12px;border:2px dashed #667eea;border-radius:8px;text-align:center;cursor:pointer;background:rgba(102,126,234,0.03)}
+    .preview-images{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-top:10px}
+    .preview-image img{width:100%;height:90px;object-fit:cover;border-radius:8px}
+    .loading{display:none;text-align:center;padding:16px}
+    .spinner{border:4px solid #f3f3f3;border-top:4px solid #667eea;border-radius:50%;width:36px;height:36px;animation:spin 1s linear infinite;margin:0 auto 10px}
+    @keyframes spin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+    .alert{padding:12px;border-radius:8px;margin-top:12px;display:none}
+    .alert-success{background:#d4edda;color:#155724;border:1px solid #c3e6cb}
+    .alert-error{background:#f8d7da;color:#721c24;border:1px solid #f5c6cb}
+    @media(max-width:768px){.form-row{grid-template-columns:1fr}.tabs{flex-direction:column}}
+    #authArea{display:flex;gap:10px;align-items:center;margin-bottom:12px}
+    #loggedInUser{color:#fff;font-weight:700}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1><i class="fas fa-store"></i> لوحة تحكم الأماكن والإعلانات</h1>
+      <p>إدارة الأماكن والإعلانات بسهولة</p>
+    </div>
+
+    <!-- auth -->
+    <div id="authArea">
+      <button id="loginBtn" class="btn btn-secondary"><i class="fas fa-sign-in-alt"></i> تسجيل الدخول</button>
+      <span id="loggedInUser" style="display:none;"></span>
+      <button id="logoutBtn" class="btn btn-secondary" style="display:none;"><i class="fas fa-sign-out-alt"></i> خروج</button>
+    </div>
+
+    <div class="tabs">
+      <div id="tab-places" class="tab active" onclick="showTab('places')"><i class="fas fa-map-marker-alt"></i> إدارة الأماكن</div>
+      <div id="tab-ads" class="tab" onclick="showTab('ads')" style="display:none"><i class="fas fa-ad"></i> إدارة الإعلانات</div>
+      <div id="tab-packages" class="tab" onclick="showTab('packages')"><i class="fas fa-gift"></i> الباقات</div>
+    </div>
+
+    <div class="content">
+      <!-- Places -->
+      <div id="places-tab" class="tab-content">
+        <h2><i class="fas fa-plus-circle"></i> إضافة / تعديل مكان</h2>
+        <form id="placeForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label>اسم المكان</label>
+              <input type="text" name="placeName" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label>نوع النشاط</label>
+              <select class="form-control" name="activityType" required></select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>المدينة</label>
+              <select class="form-control" name="city" required></select>
+            </div>
+            <div class="form-group">
+              <label>المنطقة</label>
+              <select class="form-control" name="area" required></select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>الموقع أو المول</label>
+              <select class="form-control" name="location"></select>
+            </div>
+            <div class="form-group">
+              <label>العنوان التفصيلي</label>
+              <input type="text" name="detailedAddress" class="form-control" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>رابط الموقع على الخريطة</label>
+              <input type="url" name="mapLink" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label>رقم التواصل</label>
+              <input type="tel" name="phone" class="form-control" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>رابط واتساب</label>
+              <input type="url" name="whatsappLink" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label>البريد الإلكتروني</label>
+              <input type="email" name="email" class="form-control" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>الموقع الإلكتروني</label>
+              <input type="url" name="website" class="form-control">
+            </div>
+            <div class="form-group">
+              <label>ساعات العمل</label>
+              <input type="text" name="workingHours" class="form-control" placeholder="مثال: 9ص - 12ص" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>خدمات التوصيل</label>
+              <select class="form-control" name="delivery" required>
+                <option value="نعم">نعم</option>
+                <option value="لا">لا</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>الباقة</label>
+              <select class="form-control" name="package" required></select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>صورة شعار أو صورة المكان</label>
+            <div class="file-upload">
+              <input type="file" id="placeImage" accept="image/*" onchange="previewImage(this,'placeImagePreview')">
+              <label for="placeImage"><i class="fas fa-cloud-upload-alt"></i><br>اضغط لاختيار صورة</label>
+            </div>
+            <div id="placeImagePreview" class="preview-images"></div>
+          </div>
+
+          <div class="form-group">
+            <label>وصف مختصر</label>
+            <textarea name="description" class="form-control" rows="3" required></textarea>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>كلمة المرور</label>
+              <input type="password" name="password" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label>حالة المكان</label>
+              <select name="status" class="form-control" required>
+                <option value="مفتوح">مفتوح</option>
+                <option value="مغلق">مغلق</option>
+                <option value="مغلق للصلاة">مغلق للصلاة</option>
+              </select>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> حفظ</button>
+        </form>
+      </div>
+
+      <!-- Ads -->
+      <div id="ads-tab" class="tab-content" style="display:none;margin-top:6px">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px">
+          <h2 style="margin:0"><i class="fas fa-ad"></i> إدارة الإعلانات</h2>
+          <button id="btnAddAd" class="btn btn-primary" onclick="showAddAdForm()"><i class="fas fa-plus"></i> إضافة إعلان</button>
+        </div>
+
+        <div id="adFormContainer">
+          <h3 style="margin-top:0">إضافة / تعديل إعلان</h3>
+          <form id="adForm">
+            <div class="form-row">
+              <div class="form-group">
+                <label>المكان</label>
+                <select name="placeId" class="form-control" required></select>
+              </div>
+              <div class="form-group">
+                <label>نوع الإعلان</label>
+                <select name="adType" class="form-control" required>
+                  <option value="">اختر نوع الإعلان</option>
+                  <option value="عرض">عرض</option>
+                  <option value="اعلان">إعلان</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>عنوان الإعلان</label>
+                <input type="text" name="adTitle" class="form-control" required>
+              </div>
+              <div class="form-group">
+                <label>كوبون خصم</label>
+                <input type="text" name="coupon" class="form-control">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>وصف الإعلان</label>
+              <textarea name="adDescription" class="form-control" rows="3" required></textarea>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>تاريخ البداية</label>
+                <input type="date" name="startDate" class="form-control" required>
+              </div>
+              <div class="form-group">
+                <label>تاريخ النهاية</label>
+                <input type="date" name="endDate" class="form-control" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>صور الإعلان (حتى 8 صور)</label>
+              <div class="file-upload">
+                <input type="file" id="adImages" accept="image/*" multiple onchange="previewMultipleImages(this,'adImagesPreview')">
+                <label for="adImages"><i class="fas fa-images"></i><br>اضغط لاختيار الصور (حتى 8)</label>
+              </div>
+              <div id="adImagesPreview" class="preview-images"></div>
+            </div>
+
+            <div class="form-group">
+              <label>فيديو الإعلان (اختياري)</label>
+              <div class="file-upload">
+                <input type="file" id="adVideo" accept="video/*" onchange="previewVideo(this,'adVideoPreview')">
+                <label for="adVideo"><i class="fas fa-video"></i><br>اضغط لاختيار الفيديو</label>
+              </div>
+              <div id="adVideoPreview"></div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>حالة الإعلان</label>
+                <select name="adActiveStatus" class="form-control" required>
+                  <option value="نشط">نشط</option>
+                  <option value="غير نشط">غير نشط</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>الحالة العامة</label>
+                <select name="adStatus" class="form-control" required>
+                  <option value="مفتوح">مفتوح</option>
+                  <option value="مغلق">مغلق</option>
+                </select>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> حفظ الإعلان</button>
+          </form>
+        </div>
+
+        <!-- ads list rendered here -->
+        <div id="adsListContainer" style="margin-top:12px"></div>
+      </div>
+
+      <!-- Packages -->
+      <div id="packages-tab" class="tab-content" style="display:none;margin-top:6px">
+        <h2><i class="fas fa-gift"></i> الباقات</h2>
+        <div id="packagesGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:12px"></div>
+      </div>
+    </div>
+
+    <div class="loading" id="loading"><div class="spinner"></div><p style="color:#fff">جاري المعالجة...</p></div>
+    <div class="alert alert-success" id="successAlert"><i class="fas fa-check-circle"></i> تم بنجاح</div>
+    <div class="alert alert-error" id="errorAlert"><i class="fas fa-exclamation-circle"></i> حدث خطأ</div>
+  </div>
+
+  <!-- Login modal -->
+  <div id="loginModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center">
+    <div style="background:#fff;max-width:420px;width:90%;border-radius:12px;padding:18px;margin:auto;direction:rtl">
+      <h3 style="margin-bottom:10px">دخول صاحب المحل</h3>
+      <form id="loginForm">
+        <div style="margin-bottom:10px">
+          <label style="display:block;font-weight:600;margin-bottom:6px">رقم التواصل أو رقم المكان</label>
+          <input type="text" name="phoneOrId" class="form-control" placeholder="أدخل رقم التواصل أو ID المكان" required>
+        </div>
+        <div style="margin-bottom:12px">
+          <label style="display:block;font-weight:600;margin-bottom:6px">كلمة المرور</label>
+          <input type="password" name="password" class="form-control" placeholder="كلمة المرور" required>
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button type="button" id="loginCancel" class="btn btn-secondary">إلغاء</button>
+          <button type="submit" class="btn btn-primary">دخول</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
