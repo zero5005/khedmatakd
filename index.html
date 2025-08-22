@@ -22,7 +22,8 @@
       --error-bg:#f8d7da;
       --status-bg:#fff9e6;
       --status-border:#ffd36b;
-      --status-btn-text: #222;
+      --status-btn-text:#222;
+
       /* Ads & Packages accents (light mode) */
       --ads-accent-1: #ff7a18;
       --ads-accent-2: #ffb199;
@@ -31,6 +32,7 @@
       --ads-btn-text: #ffffff;
       --ads-meta: #4b5563;
       --ads-preview-bg: #f8fafc;
+
       --pkg-accent-1: #4f46e5;
       --pkg-accent-2: #06b6d4;
       --pkg-card-bg: #ffffff;
@@ -54,7 +56,8 @@
       --error-bg:#3b1f24;
       --status-bg:#14202a;
       --status-border:rgba(255,215,0,0.08);
-      --status-btn-text: #e6eef8;
+      --status-btn-text:#e6eef8;
+
       --ads-accent-1: #7c3aed;
       --ads-accent-2: #06b6d4;
       --ads-card-bg: rgba(255,255,255,0.03);
@@ -62,6 +65,7 @@
       --ads-btn-text: #0f1726;
       --ads-meta: #9fb3c8;
       --ads-preview-bg: rgba(255,255,255,0.02);
+
       --pkg-accent-1: #06b6d4;
       --pkg-accent-2: #7c3aed;
       --pkg-card-bg: rgba(255,255,255,0.02);
@@ -79,8 +83,8 @@
       color:var(--text-color);
     }
     .container{max-width:1200px;margin:0 auto;padding:20px}
-    .header{background:var(--card-bg);backdrop-filter:blur(10px);border-radius:16px;padding:22px;margin-bottom:18px;text-align:center}
-    .header h1{color:var(--text-color);font-size:1.6rem;margin-bottom:6px}
+    .header{background:var(--card-bg);backdrop-filter:blur(10px);border-radius:16px;padding:22px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between}
+    .header h1{color:var(--text-color);font-size:1.3rem;margin:0}
     .tabs{display:flex;background:var(--card-bg);border-radius:12px;padding:8px;margin-bottom:18px}
     .tab{flex:1;padding:10px;text-align:center;cursor:pointer;border-radius:8px;transition:all .2s;color:var(--muted);font-weight:600}
     .tab.active{background:var(--primary-gradient);color:#fff;transform:translateY(-2px)}
@@ -104,112 +108,68 @@
     #authArea{display:flex;gap:10px;align-items:center;margin-bottom:12px}
     #loggedInUser{color:var(--text-color);font-weight:700}
 
-    /* place status bar styles (buttons) */
+    /* place status bar */
     #placeStatusBar{display:none;direction:rtl;padding:12px;background:var(--status-bg);border:1px solid var(--status-border);border-radius:6px;margin:12px 0}
     #placeStatusBar .left{display:flex;align-items:center;gap:12px;flex:1}
-    #placeStatusLabel{padding:6px 10px;border-radius:4px;background:rgba(0,0,0,0.04);min-width:80px;text-align:center;color:var(--text-color)}
     #placeStatusButtons{display:flex;gap:8px;flex-wrap:wrap}
 
-    /* Improved status button styles: ensure text always visible and good contrast */
     .status-btn{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      min-width:110px;
-      padding:10px 14px;
-      border-radius:10px;
-      border:1px solid rgba(0,0,0,0.06);
-      background:linear-gradient(180deg,#ffffff,#f3f6ff);
-      box-shadow:0 2px 6px rgba(102,126,234,0.06);
-      cursor:pointer;
-      color:var(--status-btn-text);
-      font-weight:800;
-      font-size:0.95rem;
-      letter-spacing:0.2px;
-      transition:all .12s ease;
-      white-space:nowrap;
-      text-align:center;
+      display:inline-flex;align-items:center;justify-content:center;min-width:110px;padding:10px 14px;border-radius:10px;border:1px solid rgba(0,0,0,0.06);
+      background:linear-gradient(180deg,#ffffff,#f3f6ff);box-shadow:0 2px 6px rgba(102,126,234,0.06);cursor:pointer;color:var(--status-btn-text);
+      font-weight:800;font-size:0.95rem;letter-spacing:0.2px;transition:all .12s ease;white-space:nowrap;text-align:center;
     }
-    .status-btn:hover{ transform:translateY(-2px); box-shadow:0 8px 18px rgba(0,0,0,0.08); }
-    .status-btn:disabled{ opacity:0.7; cursor:not-allowed; transform:none; box-shadow:none; filter:grayscale(0.02); }
+    .status-btn:hover{transform:translateY(-2px);box-shadow:0 8px 18px rgba(0,0,0,0.08)}
+    .status-btn:disabled{opacity:0.7;cursor:not-allowed}
+    .status-btn.active{color:#fff !important;box-shadow:0 8px 24px rgba(0,0,0,0.18)}
+    .status-btn.active[data-status="مفتوح"]{background:linear-gradient(90deg,#28a745,#2ec27e);border-color:transparent}
+    .status-btn.active[data-status="مغلق"]{background:linear-gradient(90deg,#dc3545,#e85a5a);border-color:transparent}
+    .status-btn.active[data-status="مغلق للصلاة"]{background:linear-gradient(90deg,#ff9800,#ffb74d);border-color:transparent}
+    .status-btn.active[data-status="تحت التجهيز"]{background:linear-gradient(90deg,#6c757d,#9aa0a6);border-color:transparent}
+    body.dark .status-btn{background:linear-gradient(180deg,#0b0f14,#0d1620);border:1px solid rgba(255,255,255,0.04);color:var(--status-btn-text);box-shadow:none}
 
-    /* Active variants with clear text color */
-    .status-btn.active{
-      color:#fff !important;
-      box-shadow:0 8px 24px rgba(0,0,0,0.18);
-    }
-    .status-btn.active[data-status="مفتوح"]{ background: linear-gradient(90deg,#28a745,#2ec27e); border-color:transparent; }
-    .status-btn.active[data-status="مغلق"]{ background: linear-gradient(90deg,#dc3545,#e85a5a); border-color:transparent; }
-    .status-btn.active[data-status="مغلق للصلاة"]{ background: linear-gradient(90deg,#ff9800,#ffb74d); border-color:transparent; }
-    .status-btn.active[data-status="تحت التجهيز"]{ background: linear-gradient(90deg,#6c757d,#9aa0a6); border-color:transparent; }
+    /* ads cards */
+    .ad-card{background:var(--ads-card-bg);border:1px solid var(--ads-card-border);border-radius:10px;padding:12px;margin-bottom:10px;color:var(--text-color);transition:transform .12s ease,box-shadow .12s ease}
+    .ad-card:hover{transform:translateY(-6px);box-shadow:0 12px 30px rgba(0,0,0,0.08)}
+    .ad-card h4{margin:0 0 6px 0;font-size:1.05rem}
+    .ad-card .meta{color:var(--ads-meta);font-size:0.9rem;margin-bottom:8px}
+    .ad-card p{color:var(--muted);margin-bottom:8px}
+    .ad-images{display:flex;gap:8px;margin-top:8px}
+    .ad-images img{width:80px;height:60px;object-fit:cover;border-radius:8px;border:1px solid rgba(0,0,0,0.04);background:var(--ads-preview-bg)}
+    .ad-actions{display:flex;gap:8px;margin-top:10px}
+    .edit-btn{background:transparent;border:1px solid rgba(0,0,0,0.06);padding:8px 12px;border-radius:8px;color:var(--text-color);cursor:pointer}
+    .delete-btn{background:linear-gradient(90deg,#ef4444,#f97316);color:#fff;padding:8px 12px;border-radius:8px;border:none;cursor:pointer}
 
-    /* ensure non-active buttons are readable in dark mode */
-    body.dark .status-btn{ background: linear-gradient(180deg,#0b0f14,#0d1620); border:1px solid rgba(255,255,255,0.04); color:var(--status-btn-text); box-shadow:none; }
-    body.dark .status-btn:hover{ transform:none; box-shadow:0 6px 14px rgba(0,0,0,0.45); }
+    /* packages */
+    #packagesGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+    .pkg-card{background:var(--pkg-card-bg);border:1px solid var(--pkg-card-border);border-radius:12px;padding:12px;color:var(--pkg-text);transition:transform .12s ease}
+    .pkg-card:hover{transform:translateY(-6px);box-shadow:0 12px 30px rgba(0,0,0,0.08)}
+    .choose-pkg{padding:8px 12px;border-radius:8px;border:none;background:linear-gradient(90deg,var(--pkg-accent-1),var(--pkg-accent-2));color:#fff;cursor:pointer;font-weight:700}
 
-    /* ================= Ads & Packages card fixes (keeps text readable) ================= */
-    #adsListContainer > div {
-      background: var(--ads-card-bg) !important;
-      border: 1px solid var(--ads-card-border) !important;
-      border-radius: 10px !important;
-      padding: 12px !important;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.04) !important;
-      margin-bottom: 10px !important;
-      color: var(--text-color) !important;
-      transition: transform .12s ease, box-shadow .12s ease;
-      overflow: hidden;
-    }
-    #adsListContainer > div:hover {
-      transform: translateY(-6px) !important;
-      box-shadow: 0 12px 30px rgba(0,0,0,0.08) !important;
-    }
-    #adsListContainer > div h4 { margin:0 0 6px 0; font-size:1.05rem; color:var(--text-color) !important; }
-    #adsListContainer > div .meta { color: var(--ads-meta) !important; font-size:0.9rem; margin-bottom:8px; }
-    #adsListContainer > div p { color: var(--muted) !important; margin-bottom:8px; }
-    #adsListContainer > div img { width:80px !important; height:60px !important; object-fit:cover !important; border-radius:6px !important; border:1px solid rgba(0,0,0,0.04) !important; background:var(--ads-preview-bg) !important; }
-    #adsListContainer > div button { padding:8px 12px !important; border-radius:8px !important; border:none !important; cursor:pointer !important; font-weight:700 !important; }
-    #adsListContainer > div button.edit-btn { background: transparent !important; border: 1px solid rgba(0,0,0,0.06) !important; color: var(--text-color) !important; }
-    #adsListContainer > div button.delete-btn { background: linear-gradient(90deg,#ef4444,#f97316) !important; color: #fff !important; }
-
-    #packagesGrid > div {
-      background: var(--pkg-card-bg) !important;
-      border: 1px solid var(--pkg-card-border) !important;
-      border-radius: 12px !important;
-      padding: 12px !important;
-      color: var(--pkg-text) !important;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.04) !important;
-      transition: transform .12s ease, box-shadow .12s ease;
-    }
-    #packagesGrid > div:hover { transform: translateY(-6px) !important; box-shadow: 0 12px 30px rgba(0,0,0,0.08) !important; }
-    #packagesGrid > div h3 { margin:0 0 6px 0; color: var(--pkg-text) !important; }
-    #packagesGrid > div p { color: var(--muted) !important; }
-    #packagesGrid > div button.choose-pkg { padding:8px 12px; border-radius:8px; border:none; background: linear-gradient(90deg, var(--pkg-accent-1), var(--pkg-accent-2)); color: #fff; cursor:pointer; font-weight:700; }
-
-    body.dark #adsListContainer > div { box-shadow: 0 10px 30px rgba(0,0,0,0.6) !important; }
-    body.dark #packagesGrid > div { box-shadow: 0 10px 30px rgba(0,0,0,0.6) !important; }
-
+    body.dark .ad-card, body.dark .pkg-card{box-shadow:0 10px 30px rgba(0,0,0,0.6)}
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="header" style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+    <div class="header">
       <div>
-        <h1 style="margin:0"><i class="fas fa-store"></i> لوحة تحكم الأماكن والإعلانات</h1>
-        <p style="margin:4px 0 0 0;color:var(--muted)">إدارة الأماكن والإعلانات بسهولة</p>
+        <h1><i class="fas fa-store"></i> لوحة تحكم الأماكن والإعلانات</h1>
+        <div style="color:var(--muted);font-size:0.92rem">إدارة الأماكن والإعلانات بسهولة</div>
       </div>
       <div style="display:flex;gap:8px;align-items:center;">
-        <button id="themeToggleBtn" class="btn" title="تبديل الوضع" style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:transparent;border:1px solid rgba(0,0,0,0.06);border-radius:8px;color:var(--text-color)">
-          <i id="themeIcon" class="fas fa-moon"></i><span id="themeLabel" style="font-weight:600">الوضع الليلي</span>
+        <button id="themeToggleBtn" class="btn" title="تبديل الوضع" style="background:transparent;border:1px solid rgba(0,0,0,0.06);color:var(--text-color);padding:8px;border-radius:8px">
+          <i id="themeIcon" class="fas fa-moon"></i>
+          <span id="themeLabel" style="font-weight:600;margin-inline-start:6px">الوضع الليلي</span>
         </button>
       </div>
     </div>
 
     <div id="authArea">
       <button id="loginBtn" class="btn btn-secondary"><i class="fas fa-sign-in-alt"></i> تسجيل الدخول</button>
-      <span id="loggedInUser" style="display:none;"></span>
+      <span id="loggedInUser" style="display:none;margin-inline-start:10px;"></span>
       <button id="logoutBtn" class="btn btn-secondary" style="display:none;"><i class="fas fa-sign-out-alt"></i> خروج</button>
     </div>
 
+    <!-- Place status bar -->
     <div id="placeStatusBar" style="display:none;">
       <div class="left">
         <strong style="font-size:15px;">حالة المكان:</strong>
@@ -220,7 +180,7 @@
           <button type="button" class="status-btn" data-status="تحت التجهيز">تحت التجهيز</button>
         </div>
       </div>
-      <div id="placeStatusMessage" style="min-width:160px;text-align:left;color:var(--text-color);font-size:0.95rem;"></div>
+      <div id="placeStatusMessage" style="min-width:180px;text-align:left;color:var(--text-color);font-size:0.95rem;"></div>
     </div>
 
     <div class="tabs">
@@ -232,7 +192,7 @@
     <div class="content">
       <!-- Places -->
       <div id="places-tab" class="tab-content">
-        <h2><i class="fas fa-plus-circle"></i> إضافة / تعديل مكان</h2>
+        <h2 style="margin-top:0"><i class="fas fa-plus-circle"></i> إضافة / تعديل مكان</h2>
         <form id="placeForm">
           <div class="form-row">
             <div class="form-group">
@@ -256,6 +216,16 @@
             </div>
           </div>
 
+          <div class="form-row" style="align-items:flex-end">
+            <div style="flex:1">
+              <label>رابط الموقع على الخريطة</label>
+              <input type="url" name="mapLink" class="form-control" id="mapLinkInput" placeholder="ألصق رابط Google Maps أو OpenStreetMap">
+            </div>
+            <div style="width:170px;">
+              <button type="button" id="autoLocateBtn" class="btn btn-secondary" style="width:100%;white-space:normal;">استخدم موقعي تلقائياً</button>
+            </div>
+          </div>
+
           <div class="form-row">
             <div class="form-group">
               <label>الموقع أو المول</label>
@@ -269,63 +239,58 @@
 
           <div class="form-row">
             <div class="form-group">
-              <label>رابط الموقع على الخريطة</label>
-              <input type="url" name="mapLink" class="form-control" required>
-            </div>
-            <div class="form-group">
               <label>رقم التواصل</label>
               <input type="tel" name="phone" class="form-control" required>
             </div>
-          </div>
-
-          <div class="form-row">
             <div class="form-group">
               <label>رابط واتساب</label>
-              <input type="url" name="whatsappLink" class="form-control" required>
-            </div>
-            <div class="form-group">
-              <label>البريد الإلكتروني</label>
-              <input type="email" name="email" class="form-control" required>
+              <input type="url" name="whatsappLink" class="form-control">
             </div>
           </div>
 
           <div class="form-row">
+            <div class="form-group">
+              <label>البريد الإلكتروني</label>
+              <input type="email" name="email" class="form-control">
+            </div>
             <div class="form-group">
               <label>الموقع الإلكتروني</label>
               <input type="url" name="website" class="form-control">
             </div>
+          </div>
+
+          <div class="form-row">
             <div class="form-group">
               <label>ساعات العمل</label>
-              <input type="text" name="workingHours" class="form-control" placeholder="مثال: 9ص - 12ص" required>
+              <input type="text" name="workingHours" class="form-control" placeholder="مثال: 9ص - 12ص">
+            </div>
+            <div class="form-group">
+              <label>خدمات التوصيل</label>
+              <select class="form-control" name="delivery">
+                <option value="نعم">نعم</option>
+                <option value="لا">لا</option>
+              </select>
             </div>
           </div>
 
           <div class="form-row">
             <div class="form-group">
-              <label>خدمات التوصيل</label>
-              <select class="form-control" name="delivery" required>
-                <option value="نعم">نعم</option>
-                <option value="لا">لا</option>
-              </select>
+              <label>الباقة</label>
+              <select class="form-control" name="package"></select>
             </div>
             <div class="form-group">
-              <label>الباقة</label>
-              <select class="form-control" name="package" required></select>
+              <label>صورة شعار أو صورة المكان</label>
+              <div class="file-upload">
+                <input type="file" id="placeImage" accept="image/*" onchange="previewImage(this,'placeImagePreview')">
+                <label for="placeImage"><i class="fas fa-cloud-upload-alt"></i><br>اضغط لاختيار صورة</label>
+              </div>
+              <div id="placeImagePreview" class="preview-images"></div>
             </div>
-          </div>
-
-          <div class="form-group">
-            <label>صورة شعار أو صورة المكان</label>
-            <div class="file-upload">
-              <input type="file" id="placeImage" accept="image/*" onchange="previewImage(this,'placeImagePreview')">
-              <label for="placeImage"><i class="fas fa-cloud-upload-alt"></i><br>اضغط لاختيار صورة</label>
-            </div>
-            <div id="placeImagePreview" class="preview-images"></div>
           </div>
 
           <div class="form-group">
             <label>وصف مختصر</label>
-            <textarea name="description" class="form-control" rows="3" required></textarea>
+            <textarea name="description" class="form-control" rows="3"></textarea>
           </div>
 
           <div class="form-row">
@@ -335,7 +300,7 @@
             </div>
             <div class="form-group">
               <label>حالة المكان</label>
-              <select name="status" class="form-control" required>
+              <select name="status" class="form-control">
                 <option value="مفتوح">مفتوح</option>
                 <option value="مغلق">مغلق</option>
                 <option value="مغلق للصلاة">مغلق للصلاة</option>
@@ -445,7 +410,7 @@
       <!-- Packages -->
       <div id="packages-tab" class="tab-content" style="display:none;margin-top:6px">
         <h2><i class="fas fa-gift"></i> الباقات</h2>
-        <div id="packagesGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:12px"></div>
+        <div id="packagesGrid" style="margin-top:12px"></div>
       </div>
     </div>
 
