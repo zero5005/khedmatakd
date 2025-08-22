@@ -1,11 +1,99 @@
-// // script.js - كامل ومحدّث (CORS-safe, CRUD إعلانات، زر إضافة إعلان)
-// // ضع رابط Web App الصحيح هنا (رابطك المنشور)
 // const API_URL = 'https://script.google.com/macros/s/AKfycbx-fMI2hsJ5LvKKh9fzd3Vidn2TeGtEbHV9Nyj2nZBy9xQk9Uy_uL-m3hrDqp1uUWAPwA/exec';
 
 // let currentTab = 'places';
 // let uploadedImages = [];
 // let uploadedVideos = [];
 // let editingAdId = null;
+
+// // ------------------ Place status helpers ------------------
+// function showPlaceStatusBar(place) {
+//   const bar = document.getElementById('placeStatusBar');
+//   const label = document.getElementById('placeStatusLabel');
+//   const select = document.getElementById('placeStatusSelect');
+//   const editBtn = document.getElementById('editStatusBtn');
+//   const saveBtn = document.getElementById('saveStatusBtn');
+//   const cancelBtn = document.getElementById('cancelStatusBtn');
+//   if (!bar || !label || !select || !editBtn || !saveBtn || !cancelBtn) return;
+
+//   const logged = place || getLoggedPlace() || {};
+//   const currentStatus = (logged.status && String(logged.status).trim() !== '') ? logged.status : (logged.raw && (logged.raw['حالة المكان'] || logged.raw['حالة التسجيل']) ? (logged.raw['حالة المكان'] || logged.raw['حالة التسجيل']) : 'غير محددة');
+
+//   label.textContent = currentStatus || 'غير محددة';
+//   select.value = currentStatus || '';
+
+//   bar.style.display = 'flex';
+//   label.style.display = 'inline-block';
+//   select.style.display = 'none';
+//   editBtn.style.display = 'inline-block';
+//   saveBtn.style.display = 'none';
+//   cancelBtn.style.display = 'none';
+
+//   editBtn.onclick = () => {
+//     label.style.display = 'none';
+//     select.style.display = 'inline-block';
+//     editBtn.style.display = 'none';
+//     saveBtn.style.display = 'inline-block';
+//     cancelBtn.style.display = 'inline-block';
+//   };
+
+//   cancelBtn.onclick = () => {
+//     label.style.display = 'inline-block';
+//     select.style.display = 'none';
+//     editBtn.style.display = 'inline-block';
+//     saveBtn.style.display = 'none';
+//     cancelBtn.style.display = 'none';
+//     // revert select to stored state
+//     const s = getLoggedPlace();
+//     const st = (s && s.status) ? s.status : (s && s.raw && (s.raw['حالة المكان'] || s.raw['حالة التسجيل']) ? (s.raw['حالة المكان'] || s.raw['حالة التسجيل']) : '');
+//     select.value = st || '';
+//   };
+
+//   saveBtn.onclick = async () => {
+//     const newStatus = select.value;
+//     saveBtn.disabled = true;
+//     saveBtn.textContent = 'جاري الحفظ...';
+//     try {
+//       const logged = getLoggedPlace();
+//       const placeIdToSend = (logged && logged.id) ? logged.id : (place && place.id) ? place.id : null;
+//       if (!placeIdToSend) throw new Error('غير مسجل الدخول أو لا يوجد معرف للمكان');
+
+//       const payload = { action: 'updatePlace', placeId: placeIdToSend, status: newStatus };
+//       const resp = await apiPost(payload);
+//       if (!resp.ok) throw new Error('فشل في التواصل مع الخادم عند تحديث الحالة');
+//       const data = resp.data;
+//       if (!data || data.success === false) throw new Error((data && data.error) ? data.error : 'استجابة غير متوقعة من الخادم');
+
+//       // تحديث الجلسة المحلية
+//       const stored = getLoggedPlace() || {};
+//       stored.status = newStatus;
+//       if (!stored.raw) stored.raw = {};
+//       stored.raw['حالة المكان'] = newStatus;
+//       stored.raw['حالة التسجيل'] = newStatus;
+//       setLoggedPlace(stored);
+
+//       // تحديث واجهة المستخدم
+//       label.textContent = newStatus || 'غير محددة';
+//       showSuccess('تم تحديث حالة المكان بنجاح');
+//     } catch (err) {
+//       console.error('update place status failed', err);
+//       showError(err.message || 'فشل تحديث حالة المكان');
+//     } finally {
+//       saveBtn.disabled = false;
+//       saveBtn.textContent = 'حفظ';
+//       // إغلاق وضع التحرير
+//       label.style.display = 'inline-block';
+//       select.style.display = 'none';
+//       editBtn.style.display = 'inline-block';
+//       saveBtn.style.display = 'none';
+//       cancelBtn.style.display = 'none';
+//     }
+//   };
+// }
+
+// function hidePlaceStatusBar() {
+//   const bar = document.getElementById('placeStatusBar');
+//   if (bar) bar.style.display = 'none';
+// }
 
 // // ------------------ API utilities ------------------
 // async function apiFetch(url, opts = {}) {
@@ -53,6 +141,14 @@
 //   loadPlacesForAds();
 //   setupAuthUI();
 //   if (typeof updateAdsTabVisibility === 'function') updateAdsTabVisibility();
+
+//   // show place status bar if logged
+//   const stored = getLoggedPlace();
+//   if (stored && stored.id) {
+//     showPlaceStatusBar(stored);
+//   } else {
+//     hidePlaceStatusBar();
+//   }
 // });
 
 // function initializeApp() {
@@ -204,7 +300,11 @@
 //       const div = document.createElement('div'); div.className = 'preview-image';
 //       const img = document.createElement('img'); img.src = e.target.result;
 //       const removeBtn = document.createElement('button'); removeBtn.className = 'remove-image'; removeBtn.innerHTML = '×';
-//       removeBtn.onclick = () => { div.remove(); uploadedImages = uploadedImages.filter((f, i) => i !== index); };
+//       // use file reference rather than index to avoid async index issues
+//       removeBtn.onclick = () => {
+//         div.remove();
+//         uploadedImages = uploadedImages.filter(f => f !== file);
+//       };
 //       div.appendChild(img); div.appendChild(removeBtn); preview.appendChild(div);
 //       uploadedImages.push(file);
 //     };
@@ -629,12 +729,16 @@
 //   const placeSelects = document.querySelectorAll('select[name="placeId"]'); placeSelects.forEach(ps => { ps.value = place.id; ps.disabled = true; });
 //   if (typeof updateAdsTabVisibility === 'function') updateAdsTabVisibility();
 //   if (place.id) { if (typeof checkAdQuotaAndToggle === 'function') checkAdQuotaAndToggle(place.id); if (typeof loadAdsForPlace === 'function') loadAdsForPlace(place.id); }
+
+//   // Show status bar for the logged place
+//   try { showPlaceStatusBar(place); } catch (e) { console.warn('could not show status bar', e); }
 // }
 
 // function setLoggedOutUI() {
 //   const loginBtn = document.getElementById('loginBtn'); const logoutBtn = document.getElementById('logoutBtn'); const loggedInUser = document.getElementById('loggedInUser');
 //   if (loginBtn) loginBtn.style.display = 'inline-block'; if (logoutBtn) logoutBtn.style.display = 'none'; if (loggedInUser) { loggedInUser.style.display = 'none'; loggedInUser.textContent = ''; }
 //   clearLoggedPlace();
+//   hidePlaceStatusBar();
 //   const tabAds = document.getElementById('tab-ads'); if (tabAds) tabAds.style.display = 'none';
 //   const placeSelects = document.querySelectorAll('select[name="placeId"]'); placeSelects.forEach(ps => { ps.disabled = false; });
 //   if (typeof updateAdsTabVisibility === 'function') updateAdsTabVisibility();
@@ -711,8 +815,8 @@
 // function showLoading(show) { const el = document.getElementById('loading'); if (!el) return; el.style.display = show ? 'block' : 'none'; }
 // function validateFiles() {
 //   const maxSize = 10 * 1024 * 1024;
-//   const allowedImageTypes = ['image/jpeg','image/png','image/gif'];
-//   const allowedVideoTypes = ['video/mp4','video/avi','video/mov'];
+//   const allowedImageTypes = ['image/jpeg','image/png','image/gif','image/webp'];
+//   const allowedVideoTypes = ['video/mp4','video/avi','video/mov','video/quicktime'];
 //   for (let image of uploadedImages) {
 //     if (image.size > maxSize) { showError('حجم الصورة أكبر من 10MB'); return false; }
 //     if (!allowedImageTypes.includes(image.type)) { showError('نوع الصورة غير مدعوم'); return false; }
@@ -803,94 +907,87 @@ let uploadedImages = [];
 let uploadedVideos = [];
 let editingAdId = null;
 
-// ------------------ Place status helpers ------------------
+// ------------------ Place status buttons init & update ------------------
+function initPlaceStatusButtons() {
+  const container = document.getElementById('placeStatusButtons');
+  if (!container) return;
+  container.querySelectorAll('.status-btn').forEach(btn => {
+    btn.addEventListener('click', async (ev) => {
+      const status = btn.dataset.status;
+      if (!status) return;
+      const ok = confirm(`هل تريد تغيير حالة المكان إلى: "${status}"؟`);
+      if (!ok) return;
+      await updatePlaceStatus(status, btn);
+    });
+  });
+}
+
 function showPlaceStatusBar(place) {
   const bar = document.getElementById('placeStatusBar');
-  const label = document.getElementById('placeStatusLabel');
-  const select = document.getElementById('placeStatusSelect');
-  const editBtn = document.getElementById('editStatusBtn');
-  const saveBtn = document.getElementById('saveStatusBtn');
-  const cancelBtn = document.getElementById('cancelStatusBtn');
-  if (!bar || !label || !select || !editBtn || !saveBtn || !cancelBtn) return;
-
-  const logged = place || getLoggedPlace() || {};
-  const currentStatus = (logged.status && String(logged.status).trim() !== '') ? logged.status : (logged.raw && (logged.raw['حالة المكان'] || logged.raw['حالة التسجيل']) ? (logged.raw['حالة المكان'] || logged.raw['حالة التسجيل']) : 'غير محددة');
-
-  label.textContent = currentStatus || 'غير محددة';
-  select.value = currentStatus || '';
-
-  bar.style.display = 'flex';
-  label.style.display = 'inline-block';
-  select.style.display = 'none';
-  editBtn.style.display = 'inline-block';
-  saveBtn.style.display = 'none';
-  cancelBtn.style.display = 'none';
-
-  editBtn.onclick = () => {
-    label.style.display = 'none';
-    select.style.display = 'inline-block';
-    editBtn.style.display = 'none';
-    saveBtn.style.display = 'inline-block';
-    cancelBtn.style.display = 'inline-block';
-  };
-
-  cancelBtn.onclick = () => {
-    label.style.display = 'inline-block';
-    select.style.display = 'none';
-    editBtn.style.display = 'inline-block';
-    saveBtn.style.display = 'none';
-    cancelBtn.style.display = 'none';
-    // revert select to stored state
-    const s = getLoggedPlace();
-    const st = (s && s.status) ? s.status : (s && s.raw && (s.raw['حالة المكان'] || s.raw['حالة التسجيل']) ? (s.raw['حالة المكان'] || s.raw['حالة التسجيل']) : '');
-    select.value = st || '';
-  };
-
-  saveBtn.onclick = async () => {
-    const newStatus = select.value;
-    saveBtn.disabled = true;
-    saveBtn.textContent = 'جاري الحفظ...';
-    try {
-      const logged = getLoggedPlace();
-      const placeIdToSend = (logged && logged.id) ? logged.id : (place && place.id) ? place.id : null;
-      if (!placeIdToSend) throw new Error('غير مسجل الدخول أو لا يوجد معرف للمكان');
-
-      const payload = { action: 'updatePlace', placeId: placeIdToSend, status: newStatus };
-      const resp = await apiPost(payload);
-      if (!resp.ok) throw new Error('فشل في التواصل مع الخادم عند تحديث الحالة');
-      const data = resp.data;
-      if (!data || data.success === false) throw new Error((data && data.error) ? data.error : 'استجابة غير متوقعة من الخادم');
-
-      // تحديث الجلسة المحلية
-      const stored = getLoggedPlace() || {};
-      stored.status = newStatus;
-      if (!stored.raw) stored.raw = {};
-      stored.raw['حالة المكان'] = newStatus;
-      stored.raw['حالة التسجيل'] = newStatus;
-      setLoggedPlace(stored);
-
-      // تحديث واجهة المستخدم
-      label.textContent = newStatus || 'غير محددة';
-      showSuccess('تم تحديث حالة المكان بنجاح');
-    } catch (err) {
-      console.error('update place status failed', err);
-      showError(err.message || 'فشل تحديث حالة المكان');
-    } finally {
-      saveBtn.disabled = false;
-      saveBtn.textContent = 'حفظ';
-      // إغلاق وضع التحرير
-      label.style.display = 'inline-block';
-      select.style.display = 'none';
-      editBtn.style.display = 'inline-block';
-      saveBtn.style.display = 'none';
-      cancelBtn.style.display = 'none';
-    }
-  };
+  const msg = document.getElementById('placeStatusMessage');
+  if (!bar) return;
+  if (!place || !place.id) {
+    bar.style.display = 'none';
+    if (msg) msg.textContent = '';
+    return;
+  }
+  bar.style.display = 'block';
+  const current = (place.status && String(place.status).trim() !== '') ? place.status
+    : (place.raw && (place.raw['حالة المكان'] || place.raw['حالة التسجيل']) ? (place.raw['حالة المكان'] || place.raw['حالة التسجيل']) : '');
+  const buttons = document.querySelectorAll('#placeStatusButtons .status-btn');
+  buttons.forEach(b => {
+    b.classList.toggle('active', b.dataset.status === current);
+    b.disabled = false;
+  });
+  if (msg) msg.textContent = current ? `الحالة الحالية: ${current}` : 'الحالة غير محددة';
+  initPlaceStatusButtons();
 }
 
 function hidePlaceStatusBar() {
   const bar = document.getElementById('placeStatusBar');
+  const msg = document.getElementById('placeStatusMessage');
   if (bar) bar.style.display = 'none';
+  if (msg) msg.textContent = '';
+}
+
+async function updatePlaceStatus(newStatus, btnElement = null) {
+  try {
+    const logged = getLoggedPlace();
+    const placeId = (logged && logged.id) ? logged.id : (logged && logged.placeId) ? logged.placeId : null;
+    if (!placeId) throw new Error('لا يوجد مكان مسجّل للدخول');
+
+    const buttons = document.querySelectorAll('#placeStatusButtons .status-btn');
+    buttons.forEach(b => b.disabled = true);
+    if (btnElement) btnElement.textContent = 'جاري الحفظ...';
+
+    const payload = { action: 'updatePlace', placeId: placeId, status: newStatus };
+    const resp = await apiPost(payload);
+    if (!resp.ok) throw new Error('فشل في التواصل مع الخادم');
+    const data = resp.data;
+    if (!data || data.success === false) throw new Error((data && data.error) ? data.error : 'استجابة غير متوقعة');
+
+    const stored = getLoggedPlace() || {};
+    stored.status = newStatus;
+    if (!stored.raw) stored.raw = {};
+    stored.raw['حالة المكان'] = newStatus;
+    stored.raw['حالة التسجيل'] = newStatus;
+    setLoggedPlace(stored);
+
+    buttons.forEach(b => {
+      b.classList.toggle('active', b.dataset.status === newStatus);
+      if (b !== btnElement) b.disabled = false;
+    });
+    if (btnElement) btnElement.textContent = btnElement.dataset.status || 'تم';
+    const msg = document.getElementById('placeStatusMessage');
+    if (msg) msg.textContent = `تم التحديث إلى: ${newStatus}`;
+
+    showSuccess('تم تحديث حالة المكان');
+  } catch (err) {
+    console.error('updatePlaceStatus error', err);
+    showError(err.message || 'فشل تحديث حالة المكان');
+    document.querySelectorAll('#placeStatusButtons .status-btn').forEach(b => { b.disabled = false; });
+    if (btnElement) btnElement.textContent = btnElement.dataset.status || 'تجربة';
+  }
 }
 
 // ------------------ API utilities ------------------
@@ -905,12 +1002,6 @@ async function apiFetch(url, opts = {}) {
     return { ok: false, status: 0, error: err.message || String(err) };
   }
 }
-
-/**
- * apiPost:
- * - إذا payload هو FormData أرسله مباشرة (مناسب لرفع وسائط).
- * - إذا payload هو Object: حوّله إلى FormData لتجنّب CORS preflight.
- */
 async function apiPost(payload) {
   try {
     if (payload instanceof FormData) {
@@ -940,13 +1031,10 @@ document.addEventListener('DOMContentLoaded', () => {
   setupAuthUI();
   if (typeof updateAdsTabVisibility === 'function') updateAdsTabVisibility();
 
-  // show place status bar if logged
   const stored = getLoggedPlace();
-  if (stored && stored.id) {
-    showPlaceStatusBar(stored);
-  } else {
-    hidePlaceStatusBar();
-  }
+  if (stored && stored.id) showPlaceStatusBar(stored);
+  else hidePlaceStatusBar();
+  initPlaceStatusButtons();
 });
 
 function initializeApp() {
@@ -957,7 +1045,6 @@ function initializeApp() {
   const nextWeek = new Date(); nextWeek.setDate(nextWeek.getDate() + 7);
   if (endInput) endInput.value = nextWeek.toISOString().split('T')[0];
 }
-
 function setupEventListeners() {
   const placeForm = document.getElementById('placeForm');
   const adForm = document.getElementById('adForm');
@@ -1012,7 +1099,7 @@ async function loadLookupsAndPopulate() {
     if (pkgSelect) {
       pkgSelect.innerHTML = '<option value="">اختر الباقة</option>';
       (data.packages || []).forEach(p => {
-        const opt = document.createElement('option'); opt.value = p.id; opt.textContent = `${p.name} (${p.duration} يوم)`; pkgSelect.appendChild(opt);
+        const opt = document.createElement('option'); opt.value = p.id; opt.textContent = `${p.name} (${p.duration || p.raw && p.raw['مدة'] || ''} يوم)`; pkgSelect.appendChild(opt);
       });
     }
 
@@ -1022,7 +1109,7 @@ async function loadLookupsAndPopulate() {
       (data.packages || []).forEach(p => {
         const div = document.createElement('div'); div.style.background = '#fff'; div.style.padding = '12px'; div.style.borderRadius = '8px';
         const h = document.createElement('h3'); h.textContent = p.name;
-        const d = document.createElement('p'); d.textContent = `المدة: ${p.duration} يوم`;
+        const d = document.createElement('p'); d.textContent = `المدة: ${p.duration || (p.raw && p.raw['مدة'] ? p.raw['مدة'] : '')} يوم`;
         const desc = document.createElement('p'); desc.textContent = p.raw && p.raw['وصف الباقة'] ? p.raw['وصف الباقة'] : '';
         const btn = document.createElement('button'); btn.className = 'btn btn-primary'; btn.textContent = 'اختر الباقة';
         btn.onclick = () => choosePackageAPI(p.id);
@@ -1092,13 +1179,12 @@ function previewMultipleImages(input, previewId) {
   if (!input.files) return;
   const files = Array.from(input.files).slice(0, 8);
   if (input.files.length > 8) showError('يمكن تحميل حتى 8 صور كحد أقصى. سيتم أخذ أول 8 صور.');
-  files.forEach((file, index) => {
+  files.forEach((file) => {
     const reader = new FileReader();
     reader.onload = e => {
       const div = document.createElement('div'); div.className = 'preview-image';
       const img = document.createElement('img'); img.src = e.target.result;
       const removeBtn = document.createElement('button'); removeBtn.className = 'remove-image'; removeBtn.innerHTML = '×';
-      // use file reference rather than index to avoid async index issues
       removeBtn.onclick = () => {
         div.remove();
         uploadedImages = uploadedImages.filter(f => f !== file);
@@ -1120,45 +1206,31 @@ function previewVideo(input, previewId) {
   }
 }
 
-// ------------------ Load places for ads ------------------
-async function loadPlacesForAds() {
-  const placeSelects = document.querySelectorAll('select[name="placeId"]');
-  placeSelects.forEach(ps => { ps.innerHTML = '<option value="">اختر المكان</option>'; });
-  const resp = await apiFetch(`${API_URL}?action=places`);
-  if (!resp.ok) { updateAdsTabVisibilitySafely(); return; }
-  const json = resp.data;
-  let places = [];
-  if (json && json.success && json.data && Array.isArray(json.data.places)) places = json.data.places;
-  else if (json && Array.isArray(json.places)) places = json.places;
-  else if (Array.isArray(json)) places = json;
-  else if (json && json.data && Array.isArray(json.data)) places = json.data;
-  else places = [];
-
-  if (!Array.isArray(places)) places = [];
-
-  places.forEach(p => {
-    placeSelects.forEach(ps => {
-      const opt = document.createElement('option'); opt.value = p.id; opt.textContent = p.name; ps.appendChild(opt);
-    });
+// ------------------ Upload helper ------------------
+async function readFileAsBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => { const result = reader.result; const base64 = String(result).split(',')[1] || ''; resolve(base64); };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
   });
-
-  const logged = getLoggedPlace();
-  if (logged && logged.id) {
-    placeSelects.forEach(ps => { ps.value = logged.id; ps.disabled = true; });
-    const tabAds = document.getElementById('tab-ads');
-    if (tabAds) tabAds.style.display = 'block';
-    if (typeof loadAdsForPlace === 'function') loadAdsForPlace(logged.id);
-  } else {
-    placeSelects.forEach(ps => { ps.disabled = false; });
-    const tabAds = document.getElementById('tab-ads');
-    if (tabAds) tabAds.style.display = 'none';
-  }
-
-  updateAdsTabVisibilitySafely();
 }
-
-function updateAdsTabVisibilitySafely() {
-  if (typeof updateAdsTabVisibility === 'function') updateAdsTabVisibility();
+async function uploadToGoogleDrive(file, folder, placeId = null) {
+  if (!API_URL || !API_URL.startsWith('http')) return `https://drive.google.com/file/d/${Math.random().toString(36).substr(2, 9)}/view`;
+  const base64 = await readFileAsBase64(file);
+  const form = new FormData();
+  form.append('action', 'uploadFile');
+  form.append('folder', folder);
+  form.append('fileName', file.name);
+  form.append('mimeType', file.type || 'application/octet-stream');
+  form.append('fileData', base64);
+  if (placeId) form.append('placeId', placeId);
+  const resp = await apiPost(form);
+  if (!resp.ok) throw new Error('فشل رفع الملف');
+  const data = resp.data;
+  const fileUrl = (data && data.fileUrl) || (data && data.data && (data.data.fileUrl || data.data.url)) || data;
+  if (!fileUrl) throw new Error('تعذر استخراج رابط الملف من استجابة الخادم');
+  return fileUrl;
 }
 
 // ------------------ Place submit ------------------
@@ -1342,26 +1414,46 @@ async function handleAdSubmit(ev) {
   } finally { showLoading(false); }
 }
 
-// ------------------ Upload helper ------------------
-async function uploadToGoogleDrive(file, folder, placeId = null) {
-  if (!API_URL || !API_URL.startsWith('http')) return `https://drive.google.com/file/d/${Math.random().toString(36).substr(2, 9)}/view`;
-  const base64 = await readFileAsBase64(file);
-  const form = new FormData();
-  form.append('action', 'uploadFile');
-  form.append('folder', folder);
-  form.append('fileName', file.name);
-  form.append('mimeType', file.type || 'application/octet-stream');
-  form.append('fileData', base64);
-  if (placeId) form.append('placeId', placeId);
-  const resp = await apiPost(form);
-  if (!resp.ok) throw new Error('فشل رفع الملف');
-  const data = resp.data;
-  const fileUrl = (data && data.fileUrl) || (data && data.data && (data.data.fileUrl || data.data.url)) || data;
-  if (!fileUrl) throw new Error('تعذر استخراج رابط الملف من استجابة الخادم');
-  return fileUrl;
+// ------------------ Ads list / render / edit / delete ------------------
+async function loadPlacesForAds() {
+  const placeSelects = document.querySelectorAll('select[name="placeId"]');
+  placeSelects.forEach(ps => { ps.innerHTML = '<option value="">اختر المكان</option>'; });
+  const resp = await apiFetch(`${API_URL}?action=places`);
+  if (!resp.ok) { updateAdsTabVisibilitySafely(); return; }
+  const json = resp.data;
+  let places = [];
+  if (json && json.success && json.data && Array.isArray(json.data.places)) places = json.data.places;
+  else if (json && Array.isArray(json.places)) places = json.places;
+  else if (Array.isArray(json)) places = json;
+  else if (json && json.data && Array.isArray(json.data)) places = json.data;
+  else places = [];
+
+  if (!Array.isArray(places)) places = [];
+
+  places.forEach(p => {
+    placeSelects.forEach(ps => {
+      const opt = document.createElement('option'); opt.value = p.id; opt.textContent = p.name; ps.appendChild(opt);
+    });
+  });
+
+  const logged = getLoggedPlace();
+  if (logged && logged.id) {
+    placeSelects.forEach(ps => { ps.value = logged.id; ps.disabled = true; });
+    const tabAds = document.getElementById('tab-ads');
+    if (tabAds) tabAds.style.display = 'block';
+    if (typeof loadAdsForPlace === 'function') loadAdsForPlace(logged.id);
+  } else {
+    placeSelects.forEach(ps => { ps.disabled = false; });
+    const tabAds = document.getElementById('tab-ads');
+    if (tabAds) tabAds.style.display = 'none';
+  }
+
+  updateAdsTabVisibilitySafely();
+}
+function updateAdsTabVisibilitySafely() {
+  if (typeof updateAdsTabVisibility === 'function') updateAdsTabVisibility();
 }
 
-// ------------------ Ads list / render / edit / delete ------------------
 async function loadAdsForPlace(placeId) {
   if (!placeId) return;
   try {
@@ -1374,7 +1466,6 @@ async function loadAdsForPlace(placeId) {
     console.error('loadAdsForPlace error', err);
   }
 }
-
 function renderAdsList(ads) {
   let c = document.getElementById('adsListContainer');
   if (!c) {
@@ -1406,7 +1497,6 @@ function renderAdsList(ads) {
     c.appendChild(card);
   });
 }
-
 function startEditAd(ad) {
   try {
     editingAdId = ad.id || null;
@@ -1427,7 +1517,6 @@ function startEditAd(ad) {
     showTab('ads');
   } catch (e) { console.error('startEditAd failed', e); }
 }
-
 async function deleteAdConfirm(adId) {
   if (!confirm('هل أنت متأكد من حذف هذا الإعلان؟ لا يمكن التراجع.')) return;
   try {
@@ -1456,7 +1545,6 @@ async function checkAdQuotaAndToggle(placeId) {
     toggleAdFormAllowed(remaining > 0, remaining > 0 ? '' : 'استنفدت حصة الإعلانات');
   } catch (err) { console.error('checkAdQuotaAndToggle', err); toggleAdFormAllowed(false, 'خطأ أثناء التحقق'); }
 }
-
 function toggleAdFormAllowed(allowed, message) {
   const adForm = document.getElementById('adForm');
   if (!adForm) return;
@@ -1511,7 +1599,6 @@ function setupAuthUI() {
   if (stored) setLoggedInUI(stored);
   if (typeof updateAdsTabVisibility === 'function') updateAdsTabVisibility();
 }
-
 function getLoggedPlace() { try { const raw = localStorage.getItem('khedmatak_place'); return raw ? JSON.parse(raw) : null; } catch (e) { return null; } }
 function setLoggedPlace(obj) { try { localStorage.setItem('khedmatak_place', JSON.stringify(obj)); } catch (e) {} }
 function clearLoggedPlace() { localStorage.removeItem('khedmatak_place'); }
@@ -1528,10 +1615,8 @@ async function setLoggedInUI(place) {
   if (typeof updateAdsTabVisibility === 'function') updateAdsTabVisibility();
   if (place.id) { if (typeof checkAdQuotaAndToggle === 'function') checkAdQuotaAndToggle(place.id); if (typeof loadAdsForPlace === 'function') loadAdsForPlace(place.id); }
 
-  // Show status bar for the logged place
   try { showPlaceStatusBar(place); } catch (e) { console.warn('could not show status bar', e); }
 }
-
 function setLoggedOutUI() {
   const loginBtn = document.getElementById('loginBtn'); const logoutBtn = document.getElementById('logoutBtn'); const loggedInUser = document.getElementById('loggedInUser');
   if (loginBtn) loginBtn.style.display = 'inline-block'; if (logoutBtn) logoutBtn.style.display = 'none'; if (loggedInUser) { loggedInUser.style.display = 'none'; loggedInUser.textContent = ''; }
@@ -1600,14 +1685,6 @@ function setSelectValueWhenReady(selector, val, retries = 12, interval = 200) {
 }
 
 // ------------------ Small helpers ------------------
-function readFileAsBase64(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => { const result = reader.result; const base64 = String(result).split(',')[1] || ''; resolve(base64); };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
 function showSuccess(message) { const el = document.getElementById('successAlert'); if (!el) return; el.textContent = message; el.className = 'alert alert-success'; el.style.display = 'block'; setTimeout(()=>el.style.display='none',5000); }
 function showError(message) { const el = document.getElementById('errorAlert'); if (!el) return; el.textContent = message; el.className = 'alert alert-error'; el.style.display = 'block'; setTimeout(()=>el.style.display='none',6000); }
 function showLoading(show) { const el = document.getElementById('loading'); if (!el) return; el.style.display = show ? 'block' : 'none'; }
@@ -1625,6 +1702,14 @@ function validateFiles() {
     if (!allowedVideoTypes.includes(v.type)) { showError('نوع الفيديو غير مدعوم'); return false; }
   }
   return true;
+}
+function readFileAsBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => { const result = reader.result; const base64 = String(result).split(',')[1] || ''; resolve(base64); };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 }
 
 // ---------- Login ----------
