@@ -1,6 +1,6 @@
 // merged script.js — includes payment UI, upload helpers, and imgbb upload client helpers
 // Make sure API_URL points to your Web App endpoint.
-const API_URL = 'https://script.google.com/macros/s/AKfy.../exec'; // ضع رابط Web App هنا
+const API_URL = 'https://script.google.com/macros/s/AKfycbx-fMI2hsJ5LvKKh9fzd3Vidn2TeGtEbHV9Nyj2nZBy9xQk9Uy_uL-m3hrDqp1uUWAPwA/exec'; // ضع رابط Web App هنا
 
 let currentTab = 'places';
 let uploadedImages = [];
