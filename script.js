@@ -1353,7 +1353,7 @@
 // /* =========== End of script.js (يمكنك إضافة باقي UI handlers حسب مشروعك) =========== */
 // script.js - كامل للواجهة (Frontend client)
 // قبل الاستخدام: استبدل API_URL برابط Web App المنشور من Google Apps Script
-const API_URL = 'REPLACE_WITH_YOUR_WEBAPP_URL'; // مثال: 'https://script.google.com/macros/s/XXXX/exec'
+const API_URL = 'https://script.google.com/macros/s/AKfycbx-fMI2hsJ5LvKKh9fzd3Vidn2TeGtEbHV9Nyj2nZBy9xQk9Uy_uL-m3hrDqp1uUWAPwA/exec'; // مثال: 'https://script.google.com/macros/s/XXXX/exec'
 
 // =================== HTTP helpers ===================
 async function apiFetch(url, opts = {}) {
