@@ -1667,12 +1667,101 @@ function parseDateISO(d) {
   }
 }
 
+// دالة محسنة لتحليل التواريخ من الشيت
+function parseSheetDate(dateStr) {
+  if (!dateStr) return null;
+  try {
+    const s = String(dateStr).trim();
+    if (!s) return null;
+    
+    // تنسيق YYYY-MM-DD
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+      const parts = s.split('-');
+      const y = Number(parts[0]), m = Number(parts[1]) - 1, day = Number(parts[2]);
+      if (isNaN(y) || isNaN(m) || isNaN(day)) return null;
+      const dt = new Date(y, m, day);
+      if (isNaN(dt.getTime())) return null;
+      // تحديد الساعة على نهاية اليوم (23:59:59) للعدّاد
+      dt.setHours(23,59,59,999);
+      return dt;
+    }
+    
+    // تنسيقات أخرى
+    const dt = new Date(s);
+    if (isNaN(dt.getTime())) return null;
+    return dt;
+  } catch (e) {
+    console.warn('parseSheetDate error:', e, 'for input:', dateStr);
+    return null;
+  }
+}
+
 // دالة مساعدة لإنشاء تاريخ انتهاء للاختبار
 function createTestEndDate(daysFromNow = 7) {
   const now = new Date();
   const endDate = new Date(now.getTime() + (daysFromNow * 24 * 60 * 60 * 1000));
   endDate.setHours(23, 59, 59, 999);
   return endDate;
+}
+
+// دالة لاختبار تحليل التواريخ
+function testDateParsing() {
+  console.log('=== اختبار تحليل التواريخ ===');
+  
+  const testDates = [
+    '2025-09-13',
+    '2025-12-12',
+    '2025-01-01',
+    '2025-12-31',
+    'invalid-date',
+    '',
+    null,
+    undefined
+  ];
+  
+  testDates.forEach(dateStr => {
+    console.log(`اختبار: "${dateStr}"`);
+    const parsed = parseSheetDate(dateStr);
+    if (parsed) {
+      console.log(`  ✓ محلل: ${parsed.toISOString()}`);
+    } else {
+      console.log(`  ✗ فشل التحليل`);
+    }
+  });
+}
+
+// دالة لاختبار العدادات مع التواريخ الصحيحة
+function testCountdownWithRealDates() {
+  console.log('=== اختبار العدادات مع التواريخ الصحيحة ===');
+  
+  // اختبار مع التواريخ التي ذكرتها
+  const startDate = parseSheetDate('2025-09-13');
+  const endDate = parseSheetDate('2025-12-12');
+  
+  if (startDate && endDate) {
+    console.log('✓ تم تحليل التواريخ بنجاح');
+    console.log('تاريخ البداية:', startDate.toISOString());
+    console.log('تاريخ النهاية:', endDate.toISOString());
+    
+    const now = new Date();
+    const diff = endDate.getTime() - now.getTime();
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    
+    console.log(`الوقت المتبقي: ${days} يوم و ${hours} ساعة و ${minutes} دقيقة`);
+    
+    // اختبار العداد
+    const countdownEl = document.getElementById('packageStatusCountdown');
+    if (countdownEl) {
+      console.log('✓ بدء العدّاد...');
+      startPackageStatusCountdown(endDate, countdownEl);
+    } else {
+      console.log('✗ العداد غير موجود');
+    }
+  } else {
+    console.log('✗ فشل تحليل التواريخ');
+  }
 }
 
 // دالة اختبار للعداد
@@ -1801,15 +1890,31 @@ function debugCountdowns() {
     console.log('تاريخ بداية الاشتراك:', logged.raw['تاريخ بداية الاشتراك']);
     console.log('تاريخ نهاية الاشتراك:', logged.raw['تاريخ نهاية الاشتراك']);
     
-    const endDate = parseDateISO(logged.raw['تاريخ نهاية الاشتراك']);
+    // اختبار تحليل التواريخ
+    const startDateRaw = logged.raw['تاريخ بداية الاشتراك'];
+    const endDateRaw = logged.raw['تاريخ نهاية الاشتراك'];
+    
+    console.log('=== اختبار تحليل التواريخ ===');
+    console.log('تاريخ البداية الخام:', startDateRaw);
+    console.log('تاريخ النهاية الخام:', endDateRaw);
+    
+    const startDate = parseSheetDate(startDateRaw);
+    const endDate = parseSheetDate(endDateRaw);
+    
+    if (startDate) {
+      console.log('✓ تاريخ البداية محلل:', startDate.toISOString());
+    } else {
+      console.log('✗ لا يمكن تحليل تاريخ البداية');
+    }
+    
     if (endDate) {
-      console.log('تاريخ الانتهاء المحلل:', endDate.toISOString());
+      console.log('✓ تاريخ النهاية محلل:', endDate.toISOString());
       const now = new Date();
       const diff = endDate.getTime() - now.getTime();
       console.log('الوقت المتبقي (ملي ثانية):', diff);
       console.log('الوقت المتبقي (أيام):', Math.floor(diff / (1000 * 60 * 60 * 24)));
     } else {
-      console.log('✗ لا يمكن تحليل تاريخ الانتهاء');
+      console.log('✗ لا يمكن تحليل تاريخ النهاية');
     }
   } else {
     console.log('✗ لا توجد بيانات مكان مسجل');
