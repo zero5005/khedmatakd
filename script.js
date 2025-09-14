@@ -1674,8 +1674,11 @@ function parseSheetDate(dateStr) {
     const s = String(dateStr).trim();
     if (!s) return null;
     
+    console.log('parseSheetDate input:', s);
+    
     // تنسيق YYYY-MM-DD
     if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+      console.log('matched YYYY-MM-DD format');
       const parts = s.split('-');
       const y = Number(parts[0]), m = Number(parts[1]) - 1, day = Number(parts[2]);
       if (isNaN(y) || isNaN(m) || isNaN(day)) return null;
@@ -1683,21 +1686,26 @@ function parseSheetDate(dateStr) {
       if (isNaN(dt.getTime())) return null;
       // تحديد الساعة على نهاية اليوم (23:59:59) للعدّاد
       dt.setHours(23,59,59,999);
+      console.log('parsed YYYY-MM-DD:', dt.toISOString());
       return dt;
     }
     
     // تنسيق ISO مع الوقت (مثل: 2025-12-11T22:00:00.000Z)
     if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(s)) {
+      console.log('matched ISO format');
       const dt = new Date(s);
       if (isNaN(dt.getTime())) return null;
       // تحديد الساعة على نهاية اليوم (23:59:59) للعدّاد
       dt.setHours(23,59,59,999);
+      console.log('parsed ISO:', dt.toISOString());
       return dt;
     }
     
     // تنسيقات أخرى
+    console.log('trying generic Date parsing');
     const dt = new Date(s);
     if (isNaN(dt.getTime())) return null;
+    console.log('parsed generic:', dt.toISOString());
     return dt;
   } catch (e) {
     console.warn('parseSheetDate error:', e, 'for input:', dateStr);
@@ -1799,6 +1807,35 @@ function testNewDateFormats() {
       console.log(`  ✗ فشل التحليل`);
     }
   });
+}
+
+// دالة لاختبار التواريخ مباشرة
+function testSpecificDate() {
+  console.log('=== اختبار التاريخ المحدد ===');
+  const testDate = '2025-12-11T22:00:00.000Z';
+  console.log('اختبار التاريخ:', testDate);
+  
+  const parsed = parseSheetDate(testDate);
+  if (parsed) {
+    console.log('✓ تم تحليل التاريخ بنجاح:', parsed.toISOString());
+    const now = new Date();
+    const diff = parsed.getTime() - now.getTime();
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    console.log(`الوقت المتبقي: ${days} يوم و ${hours} ساعة و ${minutes} دقيقة`);
+    
+    // اختبار العداد
+    const countdownEl = document.getElementById('packageStatusCountdown');
+    if (countdownEl) {
+      console.log('✓ بدء العدّاد...');
+      startPackageStatusCountdown(parsed, countdownEl);
+    } else {
+      console.log('✗ العداد غير موجود');
+    }
+  } else {
+    console.log('✗ فشل تحليل التاريخ');
+  }
 }
 
 // دالة اختبار للعداد
@@ -1937,6 +1974,10 @@ function debugCountdowns() {
     
     const startDate = parseSheetDate(startDateRaw);
     const endDate = parseSheetDate(endDateRaw);
+    
+    console.log('=== تفاصيل التحليل ===');
+    console.log('startDateRaw:', startDateRaw, '-> parsed:', startDate);
+    console.log('endDateRaw:', endDateRaw, '-> parsed:', endDate);
     
     if (startDate) {
       console.log('✓ تاريخ البداية محلل:', startDate.toISOString());
