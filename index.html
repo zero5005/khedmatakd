@@ -1,445 +1,1596 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>لوحة تحكم الأماكن والإعلانات</title>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-  <style>
-    /* ========== CSS Variables ========== */
-    :root{
-      --bg-gradient-1:#667eea;
-      --bg-gradient-2:#764ba2;
-      --page-bg: linear-gradient(135deg,var(--bg-gradient-1),var(--bg-gradient-2));
-      --card-bg: rgba(255,255,255,0.95);
-      --text-color:#222;
-      --muted:#666;
-      --control-bg:#fff;
-      --control-border:#e1e5e9;
-      --primary-gradient: linear-gradient(135deg,#667eea,#764ba2);
-      --secondary-bg:#6c757d;
-      --success-bg:#d4edda;
-      --error-bg:#f8d7da;
-      --status-bg:#fff9e6;
-      --status-border:#ffd36b;
-      --status-btn-text:#222;
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بان - إدارة الأماكن والإعلانات</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        /* CSS مدمج داخل الملف */
+        :root {
+            --primary-color: #4f46e5;
+            --primary-hover: #4338ca;
+            --success-color: #10b981;
+            --error-color: #ef4444;
+            --warning-color: #f59e0b;
+            --background-color: #f8fafc;
+            --card-background: #ffffff;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --border-color: #e5e7eb;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
 
-      /* Ads & Packages accents (light mode) */
-      --ads-accent-1: #ff7a18;
-      --ads-accent-2: #ffb199;
-      --ads-card-bg: #ffffff;
-      --ads-card-border: #e6e9ef;
-      --ads-btn-text: #ffffff;
-      --ads-meta: #4b5563;
-      --ads-preview-bg: #f8fafc;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-      --pkg-accent-1: #4f46e5;
-      --pkg-accent-2: #06b6d4;
-      --pkg-card-bg: #ffffff;
-      --pkg-card-border: #e6e9ef;
-      --pkg-text: #1f2937;
-    }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-primary);
+            line-height: 1.6;
+            transition: all 0.3s ease;
+        }
 
-    /* Dark theme overrides */
-    body.dark{
-      --bg-gradient-1:#0f172a;
-      --bg-gradient-2:#0b1220;
-      --page-bg: linear-gradient(135deg,var(--bg-gradient-1),var(--bg-gradient-2));
-      --card-bg: rgba(12,18,28,0.88);
-      --text-color:#e6eef8;
-      --muted:#9fb3c8;
-      --control-bg:#0f1726;
-      --control-border:#22303f;
-      --primary-gradient: linear-gradient(135deg,#0ea5a9,#0f8bff);
-      --secondary-bg:#374151;
-      --success-bg:#153b2f;
-      --error-bg:#3b1f24;
-      --status-bg:#14202a;
-      --status-border:rgba(255,215,0,0.08);
-      --status-btn-text:#e6eef8;
+        body.dark {
+            --background-color: #111827;
+            --card-background: #1f2937;
+            --text-primary: #f9fafb;
+            --text-secondary: #d1d5db;
+            --border-color: #374151;
+        }
 
-      --ads-accent-1: #7c3aed;
-      --ads-accent-2: #06b6d4;
-      --ads-card-bg: rgba(255,255,255,0.03);
-      --ads-card-border: rgba(255,255,255,0.04);
-      --ads-btn-text: #0f1726;
-      --ads-meta: #9fb3c8;
-      --ads-preview-bg: rgba(255,255,255,0.02);
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
 
-      --pkg-accent-1: #06b6d4;
-      --pkg-accent-2: #7c3aed;
-      --pkg-card-bg: rgba(255,255,255,0.02);
-      --pkg-card-border: rgba(255,255,255,0.04);
-      --pkg-text: #e6eef8;
-    }
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #6366f1 100%);
+            color: white;
+            padding: 1rem 0;
+            box-shadow: var(--shadow-lg);
+            margin-bottom: 2rem;
+        }
 
-    /* ========== Base styles ========== */
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{
-      font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background:var(--page-bg);
-      min-height:100vh;
-      direction:rtl;
-      color:var(--text-color);
-    }
-    .container{max-width:1200px;margin:0 auto;padding:20px}
-    .header{background:var(--card-bg);backdrop-filter:blur(10px);border-radius:16px;padding:22px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between}
-    .header h1{color:var(--text-color);font-size:1.3rem;margin:0}
-    .tabs{display:flex;background:var(--card-bg);border-radius:12px;padding:8px;margin-bottom:18px}
-    .tab{flex:1;padding:10px;text-align:center;cursor:pointer;border-radius:8px;transition:all .2s;color:var(--muted);font-weight:600}
-    .tab.active{background:var(--primary-gradient);color:#fff;transform:translateY(-2px)}
-    .content{background:var(--card-bg);backdrop-filter:blur(8px);border-radius:12px;padding:18px}
-    .form-group{margin-bottom:12px}
-    .form-control{width:100%;padding:9px;border:2px solid var(--control-border);border-radius:8px;background:var(--control-bg);color:var(--text-color)}
-    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
-    .btn{padding:10px 14px;border:none;border-radius:8px;font-weight:600;cursor:pointer}
-    .btn-primary{background:var(--primary-gradient);color:#fff}
-    .btn-secondary{background:var(--secondary-bg);color:#fff}
-    .file-upload label{display:block;padding:12px;border:2px dashed var(--bg-gradient-1);border-radius:8px;text-align:center;cursor:pointer;background:rgba(102,126,234,0.03)}
-    .preview-images{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-top:10px}
-    .preview-image img{width:100%;height:90px;object-fit:cover;border-radius:8px}
-    .loading{display:none;text-align:center;padding:16px}
-    .spinner{border:4px solid rgba(255,255,255,0.08);border-top:4px solid var(--bg-gradient-1);border-radius:50%;width:36px;height:36px;animation:spin 1s linear infinite;margin:0 auto 10px}
-    @keyframes spin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
-    .alert{padding:12px;border-radius:8px;margin-top:12px;display:none}
-    .alert-success{background:var(--success-bg);color:#155724;border:1px solid rgba(0,0,0,0.06)}
-    .alert-error{background:var(--error-bg);color:#721c24;border:1px solid rgba(0,0,0,0.06)}
-    @media(max-width:768px){.form-row{grid-template-columns:1fr}.tabs{flex-direction:column}}
-    #authArea{display:flex;gap:10px;align-items:center;margin-bottom:12px}
-    #loggedInUser{color:var(--text-color);font-weight:700}
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
 
-    /* place status bar */
-    #placeStatusBar{display:none;direction:rtl;padding:12px;background:var(--status-bg);border:1px solid var(--status-border);border-radius:6px;margin:12px 0}
-    #placeStatusBar .left{display:flex;align-items:center;gap:12px;flex:1}
-    #placeStatusButtons{display:flex;gap:8px;flex-wrap:wrap}
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
 
-    .status-btn{
-      display:inline-flex;align-items:center;justify-content:center;min-width:110px;padding:10px 14px;border-radius:10px;border:1px solid rgba(0,0,0,0.06);
-      background:linear-gradient(180deg,#ffffff,#f3f6ff);box-shadow:0 2px 6px rgba(102,126,234,0.06);cursor:pointer;color:var(--status-btn-text);
-      font-weight:800;font-size:0.95rem;letter-spacing:0.2px;transition:all .12s ease;white-space:nowrap;text-align:center;
-    }
-    .status-btn:hover{transform:translateY(-2px);box-shadow:0 8px 18px rgba(0,0,0,0.08)}
-    .status-btn:disabled{opacity:0.7;cursor:not-allowed}
-    .status-btn.active{color:#fff !important;box-shadow:0 8px 24px rgba(0,0,0,0.18)}
-    .status-btn.active[data-status="مفتوح"]{background:linear-gradient(90deg,#28a745,#2ec27e);border-color:transparent}
-    .status-btn.active[data-status="مغلق"]{background:linear-gradient(90deg,#dc3545,#e85a5a);border-color:transparent}
-    .status-btn.active[data-status="مغلق للصلاة"]{background:linear-gradient(90deg,#ff9800,#ffb74d);border-color:transparent}
-    .status-btn.active[data-status="تحت التجهيز"]{background:linear-gradient(90deg,#6c757d,#9aa0a6);border-color:transparent}
-    body.dark .status-btn{background:linear-gradient(180deg,#0b0f14,#0d1620);border:1px solid rgba(255,255,255,0.04);color:var(--status-btn-text);box-shadow:none}
+        .auth-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
 
-    /* ads cards */
-    .ad-card{background:var(--ads-card-bg);border:1px solid var(--ads-card-border);border-radius:10px;padding:12px;margin-bottom:10px;color:var(--text-color);transition:transform .12s ease,box-shadow .12s ease}
-    .ad-card:hover{transform:translateY(-6px);box-shadow:0 12px 30px rgba(0,0,0,0.08)}
-    .ad-card h4{margin:0 0 6px 0;font-size:1.05rem}
-    .ad-card .meta{color:var(--ads-meta);font-size:0.9rem;margin-bottom:8px}
-    .ad-card p{color:var(--muted);margin-bottom:8px}
-    .ad-images{display:flex;gap:8px;margin-top:8px}
-    .ad-images img{width:80px;height:60px;object-fit:cover;border-radius:8px;border:1px solid rgba(0,0,0,0.04);background:var(--ads-preview-bg)}
-    .ad-actions{display:flex;gap:8px;margin-top:10px}
-    .edit-btn{background:transparent;border:1px solid rgba(0,0,0,0.06);padding:8px 12px;border-radius:8px;color:var(--text-color);cursor:pointer}
-    .delete-btn{background:linear-gradient(90deg,#ef4444,#f97316);color:#fff;padding:8px 12px;border-radius:8px;border:none;cursor:pointer}
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
 
-    /* packages */
-    #packagesGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
-    .pkg-card{background:var(--pkg-card-bg);border:1px solid var(--pkg-card-border);border-radius:12px;padding:12px;color:var(--pkg-text);transition:transform .12s ease}
-    .pkg-card:hover{transform:translateY(-6px);box-shadow:0 12px 30px rgba(0,0,0,0.08)}
-    .choose-pkg{padding:8px 12px;border-radius:8px;border:none;background:linear-gradient(90deg,var(--pkg-accent-1),var(--pkg-accent-2));color:#fff;cursor:pointer;font-weight:700}
+        .btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
 
-    body.dark .ad-card, body.dark .pkg-card{box-shadow:0 10px 30px rgba(0,0,0,0.6)}
-  </style>
+        .btn:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: #6b7280;
+        }
+
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+
+        .btn-success {
+            background: var(--success-color);
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        .btn-danger {
+            background: var(--error-color);
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .theme-toggle {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 0.5rem;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            background: var(--card-background);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 1rem;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .tab:hover {
+            background: rgba(79, 70, 229, 0.1);
+            color: var(--primary-color);
+        }
+
+        .tab.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        /* Tab Content */
+        .tab-content {
+            background: var(--card-background);
+            border-radius: 8px;
+            padding: 2rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+        }
+
+        /* Status Bars */
+        #placeStatusBar {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            box-shadow: var(--shadow);
+        }
+
+        /* شريط حالة الباقة */
+        #packageStatusBar {
+            background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            box-shadow: var(--shadow);
+        }
+
+        .package-status-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .package-info {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        #packageStatusTitle {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        #packageStatusDetails {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .package-countdown-display {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 16px;
+            min-width: 150px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .package-countdown-display.countdown-ok {
+            background: rgba(16, 185, 129, 0.3);
+            border-color: rgba(16, 185, 129, 0.5);
+        }
+
+        .package-countdown-display.countdown-warn {
+            background: rgba(245, 158, 11, 0.3);
+            border-color: rgba(245, 158, 11, 0.5);
+        }
+
+        .package-countdown-display.countdown-crit {
+            background: rgba(239, 68, 68, 0.3);
+            border-color: rgba(239, 68, 68, 0.5);
+        }
+
+        @media (max-width: 768px) {
+            .package-status-content {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .package-countdown-display {
+                width: 100%;
+            }
+        }
+
+        #placeStatusMessage {
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        #placeStatusButtons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .status-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+        }
+
+        .status-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .status-btn.active {
+            background: rgba(255, 255, 255, 0.9);
+            color: #d97706;
+            font-weight: 600;
+        }
+
+        /* Subscription Status Bar */
+        #subscriptionStatusBar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        #subscriptionStatusBar .subscription-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        #subscriptionTitle {
+            margin: 0 0 5px 0;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        #subscriptionDetails {
+            margin: 0;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        #subscriptionCountdown {
+            background: rgba(255,255,255,0.2);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-weight: 600;
+            min-width: 120px;
+            text-align: center;
+        }
+
+        /* Package Info Card */
+        #packageInfoCard {
+            background: #f0f9ff;
+            border: 1px solid #0ea5e9;
+            border-radius: 8px;
+            padding: 12px;
+            margin: 10px 0;
+        }
+
+        body.dark #packageInfoCard {
+            background: #1e293b;
+            border-color: #0ea5e9;
+        }
+
+        #packageInfoText {
+            font-weight: 600;
+            color: #0369a1;
+            margin-bottom: 5px;
+        }
+
+        body.dark #packageInfoText {
+            color: #38bdf8;
+        }
+
+        #packageInfoCountdown {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .countdown-ok { color: #059669; }
+        .countdown-warn { color: #d97706; }
+        .countdown-crit { color: #dc2626; }
+
+        /* Activate Button & Hint */
+        #activateHint {
+            font-size: 14px;
+            margin-top: 5px;
+            padding: 8px;
+            border-radius: 4px;
+        }
+
+        #activateHint.active {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        #activateHint.pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        #activateHint.expired {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        body.dark #activateHint.active {
+            background: #064e3b;
+            color: #a7f3d0;
+        }
+
+        body.dark #activateHint.pending {
+            background: #78350f;
+            color: #fcd34d;
+        }
+
+        body.dark #activateHint.expired {
+            background: #7f1d1d;
+            color: #fca5a5;
+        }
+
+        #packageCountdown {
+            font-size: 14px;
+            font-weight: 600;
+            margin-top: 5px;
+        }
+
+
+
+        /* أضف هذا الكود هنا المعدل */
+        .package-countdown {
+            font-size: 14px;
+            font-weight: 600;
+            margin-top: 5px;
+            padding: 5px;
+            border-radius: 4px;
+            background: rgba(0,0,0,0.1);
+        }
+        
+        .countdown-ok { 
+            color: #059669; 
+            background: rgba(16, 185, 129, 0.1);
+        }
+        
+        .countdown-warn { 
+            color: #d97706; 
+            background: rgba(245, 158, 11, 0.1);
+        }
+        
+        .countdown-crit { 
+            color: #dc2626; 
+            background: rgba(239, 68, 68, 0.1);
+        }
+        
+        body.dark .package-countdown {
+            background: rgba(255,255,255,0.1);
+        }
+
+
+
+        /* المعدل أضف هذا الكود هنا */
+
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 1rem;
+            background: var(--card-background);
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+
+        /* Preview */
+        .preview {
+            margin-top: 1rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .preview img {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 2px solid var(--border-color);
+        }
+
+        .preview-image {
+            position: relative;
+            display: inline-block;
+        }
+
+        .remove-image {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--error-color);
+            color: white;
+            border: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Packages Grid */
+        .packages-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .pkg-card {
+            background: var(--card-background);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pkg-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .pkg-card h3 {
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+            font-size: 1.2rem;
+        }
+
+        /* تمييز الباقة النشطة */
+        .pkg-card.active {
+            border-color: var(--success-color);
+            background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+            position: relative;
+        }
+
+        body.dark .pkg-card.active {
+            background: linear-gradient(135deg, #064e3b 0%, #065f46 100%);
+            border-color: var(--success-color);
+        }
+
+        .pkg-card.active h3 {
+            color: var(--success-color);
+        }
+
+        .pkg-card.active::before {
+            content: "✓ الباقة المفعلة";
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: var(--success-color);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            z-index: 1;
+        }
+
+        .pkg-card.pending {
+            border-color: var(--warning-color);
+            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.2);
+        }
+
+        body.dark .pkg-card.pending {
+            background: linear-gradient(135deg, #78350f 0%, #92400e 100%);
+            border-color: var(--warning-color);
+        }
+
+        .pkg-card.pending h3 {
+            color: var(--warning-color);
+        }
+
+        .pkg-card.pending::before {
+            content: "⏳ قيد الدفع";
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: var(--warning-color);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .pkg-card.expired {
+            border-color: var(--error-color);
+            background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.2);
+        }
+
+        body.dark .pkg-card.expired {
+            background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%);
+            border-color: var(--error-color);
+        }
+
+        .pkg-card.expired h3 {
+            color: var(--error-color);
+        }
+
+        .pkg-card.expired::before {
+            content: "❌ منتهية";
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: var(--error-color);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            z-index: 1;
+        }
+
+        /* الباقة المجانية المستخدمة */
+        .pkg-card.expired .btn-trial-used {
+            background: #9ca3af;
+            color: white;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .pkg-card.expired .btn-trial-used:hover {
+            background: #9ca3af;
+            transform: none;
+        }
+
+        .choose-pkg {
+            width: 100%;
+            margin-top: 1rem;
+            padding: 0.75rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        /* حالات أزرار الباقات */
+        .choose-pkg.btn-activate {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .choose-pkg.btn-activate:hover {
+            background: var(--primary-hover);
+        }
+
+        .choose-pkg.btn-active {
+            background: var(--success-color);
+            color: white;
+            cursor: not-allowed;
+            opacity: 0.8;
+        }
+
+        .choose-pkg.btn-pending {
+            background: var(--warning-color);
+            color: white;
+            cursor: not-allowed;
+            opacity: 0.8;
+        }
+
+        .choose-pkg.btn-expired {
+            background: var(--error-color);
+            color: white;
+        }
+
+        .choose-pkg.btn-expired:hover {
+            background: #dc2626;
+        }
+
+        .choose-pkg.btn-trial-used {
+            background: #9ca3af;
+            color: white;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        /* Ads */
+        .ad-card {
+            background: var(--card-background);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: var(--shadow);
+        }
+
+        .ad-card h4 {
+            margin-bottom: 0.5rem;
+            color: var(--primary-color);
+        }
+
+        .ad-card .meta {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .ad-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .ad-images {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        .ad-images img {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+        }
+
+        .edit-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .delete-btn {
+            background: var(--error-color);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .img-placeholder-file {
+            width: 80px;
+            height: 80px;
+            background: var(--border-color);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+
+        /* Alerts */
+        .alert {
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 6px;
+            font-weight: 500;
+            display: none;
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+
+        body.dark .alert-success {
+            background: #064e3b;
+            color: #a7f3d0;
+        }
+
+        body.dark .alert-error {
+            background: #7f1d1d;
+            color: #fca5a5;
+        }
+
+        /* Loading */
+        #loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: var(--card-background);
+            padding: 2rem;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
+
+        /* Auto-locate button */
+        .auto-locate-btn {
+            background: var(--success-color);
+            margin-top: 0.5rem;
+            width: 100%;
+        }
+
+        .auto-locate-btn:hover {
+            background: #059669;
+        }
+
+        /* Ad Quota Notice */
+        #adQuotaNotice {
+            background: #fff3cd;
+            color: #856404;
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+            display: none;
+        }
+
+        body.dark #adQuotaNotice {
+            background: #78350f;
+            color: #fcd34d;
+        }
+
+        #adQuotaSummary {
+            color: var(--text-secondary);
+            margin: 8px 0;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .tabs {
+                flex-direction: column;
+            }
+
+            .tab {
+                border-bottom: 1px solid var(--border-color);
+            }
+
+            .tab:last-child {
+                border-bottom: none;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .packages-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .ad-actions {
+                flex-direction: column;
+            }
+
+            #subscriptionStatusBar .subscription-content {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            #subscriptionCountdown {
+                width: 100%;
+            }
+        }
+
+        /* Utility Classes */
+        .text-center {
+            text-align: center;
+        }
+
+        .text-success {
+            color: var(--success-color);
+        }
+
+        .text-error {
+            color: var(--error-color);
+        }
+
+        .mb-1 {
+            margin-bottom: 0.5rem;
+        }
+
+        .mb-2 {
+            margin-bottom: 1rem;
+        }
+
+        .mb-3 {
+            margin-bottom: 1.5rem;
+        }
+
+        .mt-1 {
+            margin-top: 0.5rem;
+        }
+
+        .mt-2 {
+            margin-top: 1rem;
+        }
+
+        .mt-3 {
+            margin-top: 1.5rem;
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <div>
-        <h1><i class="fas fa-store"></i> لوحة تحكم الأماكن والإعلانات</h1>
-        <div style="color:var(--muted);font-size:0.92rem">إدارة الأماكن والإعلانات بسهولة</div>
-      </div>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <button id="themeToggleBtn" class="btn" title="تبديل الوضع" style="background:transparent;border:1px solid rgba(0,0,0,0.06);color:var(--text-color);padding:8px;border-radius:8px">
-          <i id="themeIcon" class="fas fa-moon"></i>
-          <span id="themeLabel" style="font-weight:600;margin-inline-start:6px">الوضع الليلي</span>
-        </button>
-      </div>
+   
+    <div id="loading">
+        <div class="spinner"></div>
     </div>
 
-    <div id="authArea">
-      <button id="loginBtn" class="btn btn-secondary"><i class="fas fa-sign-in-alt"></i> تسجيل الدخول</button>
-      <span id="loggedInUser" style="display:none;margin-inline-start:10px;"></span>
-      <button id="logoutBtn" class="btn btn-secondary" style="display:none;"><i class="fas fa-sign-out-alt"></i> خروج</button>
+
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <i class="fas fa-store"></i>
+                بان
+            </div>
+            <div class="auth-section">
+                <button onclick="location.href='https://moslimtech.github.io/Ban/'" class="btn btn-success">
+                    <i class="fas fa-bullhorn"></i>
+                    الإعلانات العامة
+                </button>
+                <button id="themeToggleBtn" class="theme-toggle" title="تغيير المظهر" onclick="toggleTheme()">
+                    <i id="themeIcon" class="fas fa-moon"></i>
+                    <span id="themeLabel" style="display: none;">الوضع الليلي</span>
+                </button>
+                <div id="loggedInUser" class="user-info" style="display: none;">
+                    <i class="fas fa-user"></i>
+                    <span></span>
+                </div>
+                <button id="loginBtn" class="btn">
+                    <i class="fas fa-sign-in-alt"></i>
+                    تسجيل الدخول
+                </button>
+                <button id="logoutBtn" class="btn btn-secondary" style="display: none;">
+                    <i class="fas fa-sign-out-alt"></i>
+                    تسجيل الخروج
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+       
+        <div id="successAlert" class="alert alert-success"></div>
+        <div id="errorAlert" class="alert alert-error"></div>
+
+     
+        <div id="placeStatusBar" style="display: none;">
+            <div id="placeStatusMessage"></div>
+            <div id="placeStatusButtons">
+                <button class="status-btn" data-status="مفتوح">مفتوح</button>
+                <button class="status-btn" data-status="مغلق">مغلق</button>
+                <button class="status-btn" data-status="مغلق للصلاة">مغلق للصلاة</button>
+                <button class="status-btn" data-status="تحت التجهيز">تحت التجهيز</button>
+            </div>
+        </div>
+
+        <!-- شريط حالة الباقة -->
+        <div id="packageStatusBar" style="display: none;">
+            <div class="package-status-content">
+                <div class="package-info">
+                    <div id="packageStatusTitle"></div>
+                    <div id="packageStatusDetails"></div>
+                </div>
+                <div id="packageStatusCountdown" class="package-countdown-display"></div>
+            </div>
+            <!-- مؤشر تحميل الشبكة -->
+            <div id="packageStatusLoading" style="display: none; text-align: center; margin-top: 10px;">
+                <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.2); padding: 8px 12px; border-radius: 6px;">
+                    <div class="spinner" style="width: 16px; height: 16px; border-width: 2px;"></div>
+                    <span style="font-size: 14px;">جاري تحديث البيانات...</span>
+                </div>
+            </div>
+        </div>
+
+      
+        <div id="subscriptionStatusBar" style="display: none;">
+            <div class="subscription-content">
+                <div>
+                    <h4 id="subscriptionTitle"></h4>
+                    <p id="subscriptionDetails"></p>
+                </div>
+                <div id="subscriptionCountdown"></div>
+            </div>
+        </div>
+
+   
+        <div class="tabs">
+            <button class="tab active" id="tab-places" onclick="showTab('places')">
+                <i class="fas fa-store"></i>
+                بيانات المكان
+            </button>
+            <button class="tab" id="tab-ads" onclick="showTab('ads')" style="display: none;">
+                <i class="fas fa-bullhorn"></i>
+                الإعلانات
+            </button>
+            <button class="tab" id="tab-packages" onclick="showTab('packages')">
+                <i class="fas fa-box"></i>
+                الباقات
+            </button>
+        </div>
+
+      
+        <div id="places-tab" class="tab-content">
+            <h2>بيانات المكان أو الخدمة</h2>
+
+            <div id="packageInfoCard" style="display: none;">
+                <div id="packageInfoText"></div>
+                <div id="packageInfoCountdown"></div>
+                <!-- مؤشر تحميل الباقة -->
+                <div id="packageInfoLoading" style="display: none; text-align: center; margin-top: 10px;">
+                    <div style="display: inline-flex; align-items: center; gap: 8px; background: #f0f9ff; padding: 8px 12px; border-radius: 6px; border: 1px solid #0ea5e9;">
+                        <div class="spinner" style="width: 16px; height: 16px; border-width: 2px; border-top-color: #0ea5e9;"></div>
+                        <span style="font-size: 14px; color: #0369a1;">جاري تحديث حالة الباقة...</span>
+                    </div>
+                </div>
+            </div>
+
+            <form id="placeForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="placeName">اسم المكان أو الخدمة *</label>
+                        <input type="text" name="placeName" id="placeName" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">كلمة المرور *</label>
+                        <input type="password" name="password" id="password" class="form-control" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="activityType">نوع النشاط / الفئة</label>
+                        <select name="activityType" id="activityType" class="form-control">
+                            <option value="">اختر نوع النشاط</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="city">المدينة</label>
+                        <select name="city" id="city" class="form-control">
+                            <option value="">اختر المدينة</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="area">المنطقة</label>
+                        <select name="area" id="area" class="form-control">
+                            <option value="">اختر المنطقة</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="location">الموقع أو المول</label>
+                        <select name="location" id="location" class="form-control">
+                            <option value="">اختر الموقع</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="detailedAddress">العنوان التفصيلي</label>
+                    <input type="text" name="detailedAddress" id="detailedAddress" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label for="mapLink">رابط الموقع على الخريطة</label>
+                    <input type="url" name="mapLink" id="mapLink" class="form-control" placeholder="https://maps.google.com/...">
+                    <button type="button" id="autoLocateBtn" class="btn auto-locate-btn">
+                        <i class="fas fa-location-arrow"></i>
+                        استخدم موقعي الحالي
+                    </button>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="phone">رقم التواصل</label>
+                        <input type="tel" name="phone" id="phone" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="whatsappLink">رابط واتساب</label>
+                        <input type="url" name="whatsappLink" id="whatsappLink" class="form-control" placeholder="https://wa.me/...">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="email">البريد الإلكتروني</label>
+                        <input type="email" name="email" id="email" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="website">الموقع الإلكتروني</label>
+                        <input type="url" name="website" id="website" class="form-control" placeholder="https://...">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="workingHours">ساعات العمل</label>
+                        <input type="text" name="workingHours" id="workingHours" class="form-control" placeholder="9:00 ص - 10:00 م">
+                    </div>
+                    <div class="form-group">
+                        <label for="delivery">خدمات التوصيل</label>
+                        <select name="delivery" id="delivery" class="form-control">
+                            <option value="">اختر</option>
+                            <option value="نعم">نعم</option>
+                            <option value="لا">لا</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="description">وصف مختصر</label>
+                    <textarea name="description" id="description" class="form-control" rows="3" placeholder="اكتب وصفاً مختصراً عن المكان أو الخدمة..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="placeImage">صورة شعار أو صورة المكان</label>
+                    <input type="file" name="placeImage" id="placeImage" class="form-control" accept="image/*" onchange="previewImage(this, 'placeImagePreview')">
+                    <div id="placeImagePreview" class="preview"></div>
+                </div>
+
+                <div class="text-center">
+                    <button type="submit" id="savePlaceBtn" class="btn btn-success">
+                        <i class="fas fa-save"></i>
+                        حفظ بيانات المكان
+                    </button>
+                    <button type="button" id="goPackagesBtn" class="btn" onclick="showTab('packages')" style="margin-right: 10px;">
+                        <i class="fas fa-box"></i>
+                        انتقل إلى الباقات
+                    </button>
+                </div>
+                <div id="activateHint" style="display: block;"></div>
+                <div id="packageCountdown"></div>
+            </form>
+        </div>
+
+   
+        <div id="ads-tab" class="tab-content" style="display: none;">
+            <h2>إدارة الإعلانات</h2>
+            
+            <div id="adQuotaSummary"></div>
+            <div id="adQuotaNotice"></div>
+
+            <form id="adForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="adPlaceId">المكان</label>
+                        <select name="placeId" id="adPlaceId" class="form-control" required>
+                            <option value="">اختر المكان</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="adType">نوع الإعلان</label>
+                        <select name="adType" id="adType" class="form-control" required>
+                            <option value="">اختر نوع الإعلان</option>
+                            <option value="عرض خاص">عرض خاص</option>
+                            <option value="منتج جديد">منتج جديد</option>
+                            <option value="خدمة">خدمة</option>
+                            <option value="حدث">حدث</option>
+                            <option value="أخرى">أخرى</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="adTitle">عنوان الإعلان *</label>
+                    <input type="text" name="adTitle" id="adTitle" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="coupon">كوبون خصم (اختياري)</label>
+                    <input type="text" name="coupon" id="coupon" class="form-control" placeholder="كود الخصم">
+                </div>
+
+                <div class="form-group">
+                    <label for="adDescription">وصف الإعلان</label>
+                    <textarea name="adDescription" id="adDescription" class="form-control" rows="4" placeholder="اكتب وصفاً تفصيلياً للإعلان..."></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="startDate">تاريخ البداية</label>
+                        <input type="date" name="startDate" id="startDate" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="endDate">تاريخ النهاية</label>
+                        <input type="date" name="endDate" id="endDate" class="form-control" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="adImages">صور الإعلان (حتى 8 صور)</label>
+                    <input type="file" name="adImages" id="adImages" class="form-control" accept="image/*" multiple onchange="previewMultipleImages(this, 'adImagesPreview')">
+                    <div id="adImagesPreview" class="preview"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="adVideo">فيديو الإعلان (اختياري)</label>
+                    <input type="file" name="adVideo" id="adVideo" class="form-control" accept="video/*" onchange="previewVideo(this, 'adVideoPreview')">
+                    <div id="adVideoPreview" class="preview"></div>
+                </div>
+
+                <div class="text-center">
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save"></i>
+                        حفظ الإعلان
+                    </button>
+                </div>
+            </form>
+
+            <hr class="mt-3 mb-3">
+
+            <h3>إعلاناتك</h3>
+            <div id="adsListContainer">
+                <p>لا توجد إعلانات حالياً.</p>
+            </div>
+        </div>
+
+      
+        <div id="packages-tab" class="tab-content" style="display: none;">
+            <h2>الباقات المتاحة</h2>
+            <p>اختر الباقة المناسبة لاحتياجاتك:</p>
+
+        
+            <div id="currentPackageCard" style="display: none;">
+                <h4>باقتك الحالية</h4>
+                <div id="currentPackageText"></div>
+                <div id="currentPackageCountdown"></div>
+            </div>
+            
+            <div id="packagesGrid" class="packages-grid">
+               
+            </div>
+        </div>
     </div>
 
-    <!-- Place status bar -->
-    <div id="placeStatusBar" style="display:none;">
-      <div class="left">
-        <strong style="font-size:15px;">حالة المكان:</strong>
-        <div id="placeStatusButtons">
-          <button type="button" class="status-btn" data-status="مفتوح">مفتوح</button>
-          <button type="button" class="status-btn" data-status="مغلق">مغلق</button>
-          <button type="button" class="status-btn" data-status="مغلق للصلاة">مغلق للصلاة</button>
-          <button type="button" class="status-btn" data-status="تحت التجهيز">تحت التجهيز</button>
+
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">تسجيل الدخول</h3>
+                <button id="loginCancel" class="modal-close">&times;</button>
+            </div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="phoneOrId">رقم الهاتف أو ID المكان</label>
+                    <input type="text" name="phoneOrId" id="phoneOrId" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">كلمة المرور</label>
+                    <input type="password" name="password" id="loginPassword" class="form-control" required>
+                </div>
+                <div class="text-center">
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-sign-in-alt"></i>
+                        دخول
+                    </button>
+                </div>
+            </form>
         </div>
-      </div>
-      <div id="placeStatusMessage" style="min-width:180px;text-align:left;color:var(--text-color);font-size:0.95rem;"></div>
     </div>
 
-    <div class="tabs">
-      <div id="tab-places" class="tab active" onclick="showTab('places')"><i class="fas fa-map-marker-alt"></i> إدارة الأماكن</div>
-      <div id="tab-ads" class="tab" onclick="showTab('ads')" style="display:none"><i class="fas fa-ad"></i> إدارة الإعلانات</div>
-      <div id="tab-packages" class="tab" onclick="showTab('packages')"><i class="fas fa-gift"></i> الباقات</div>
-    </div>
 
-    <div class="content">
-      <!-- Places -->
-      <div id="places-tab" class="tab-content">
-        <h2 style="margin-top:0"><i class="fas fa-plus-circle"></i> إضافة / تعديل مكان</h2>
-        <form id="placeForm">
-          <div class="form-row">
-            <div class="form-group">
-              <label>اسم المكان</label>
-              <input type="text" name="placeName" class="form-control" required>
-            </div>
-            <div class="form-group">
-              <label>نوع النشاط</label>
-              <select class="form-control" name="activityType" required></select>
-            </div>
-          </div>
+    <script>
+        // إضافة دالة showTab عالمية قبل تحميل script.js
+        function showTab(tabName) {
+            // إخفاء جميع التبويبات
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.style.display = 'none';
+            });
+            
+            // إزالة الكلاس النشط من جميع الأزرار
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // إظهار التبويب المحدد
+            const targetContent = document.getElementById(tabName + '-tab');
+            if (targetContent) {
+                targetContent.style.display = 'block';
+            }
+            
+            // إضافة الكلاس النشط للزر المحدد
+            const targetTab = document.getElementById('tab-' + tabName);
+            if (targetTab) {
+                targetTab.classList.add('active');
+            }
+            
+            // تحديث المتغير العام
+            if (typeof window !== 'undefined') {
+                window.currentTab = tabName;
+            }
+        }
 
-          <div class="form-row">
-            <div class="form-group">
-              <label>المدينة</label>
-              <select class="form-control" name="city" required></select>
-            </div>
-            <div class="form-group">
-              <label>المنطقة</label>
-              <select class="form-control" name="area" required></select>
-            </div>
-          </div>
+        // دالة مساعدة للتحقق من وجود دالة
+        function isFunction(functionToCheck) {
+            return functionToCheck && {}.toString.call(functionToCheck) === '[object Function]';
+        }
 
-          <div class="form-row" style="align-items:flex-end">
-            <div style="flex:1">
-              <label>رابط الموقع على الخريطة</label>
-              <input type="url" name="mapLink" class="form-control" id="mapLinkInput" placeholder="ألصق رابط Google Maps أو OpenStreetMap">
-            </div>
-            <div style="width:170px;">
-              <button type="button" id="autoLocateBtn" class="btn btn-secondary" style="width:100%;white-space:normal;">استخدم موقعي تلقائياً</button>
-            </div>
-          </div>
+        // دالة تبديل المظهر
+        function toggleTheme() {
+            const cur = (localStorage.getItem('ban_theme') === 'dark') ? 'dark' : 'light';
+            applyTheme(cur === 'dark' ? 'light' : 'dark');
+        }
 
-          <div class="form-row">
-            <div class="form-group">
-              <label>الموقع أو المول</label>
-              <select class="form-control" name="location"></select>
-            </div>
-            <div class="form-group">
-              <label>العنوان التفصيلي</label>
-              <input type="text" name="detailedAddress" class="form-control" required>
-            </div>
-          </div>
+        // دالة تطبيق المظهر
+        function applyTheme(theme) {
+            if (theme === 'dark') {
+                document.body.classList.add('dark');
+                const icon = document.getElementById('themeIcon');
+                const lbl = document.getElementById('themeLabel');
+                if (icon) icon.className = 'fas fa-sun';
+                if (lbl) lbl.textContent = 'الوضع النهاري';
+            } else {
+                document.body.classList.remove('dark');
+                const icon = document.getElementById('themeIcon');
+                const lbl = document.getElementById('themeLabel');
+                if (icon) icon.className = 'fas fa-moon';
+                if (lbl) lbl.textContent = 'الوضع الليلي';
+            }
+            try { localStorage.setItem('ban_theme', theme || 'light'); } catch(e){}
+        }
 
-          <div class="form-row">
-            <div class="form-group">
-              <label>رقم التواصل</label>
-              <input type="tel" name="phone" class="form-control" required>
-            </div>
-            <div class="form-group">
-              <label>رابط واتساب</label>
-              <input type="url" name="whatsappLink" class="form-control">
-            </div>
-          </div>
+        // دالة لتحديث مظهر بطاقات الباقات بناءً على الحالة
+        function updatePackageCardAppearance(packageId, status, isTrialUsed = false) {
+            const card = document.querySelector(`[data-package-id="${packageId}"]`);
+            if (!card) return;
 
-          <div class="form-row">
-            <div class="form-group">
-              <label>البريد الإلكتروني</label>
-              <input type="email" name="email" class="form-control">
-            </div>
-            <div class="form-group">
-              <label>الموقع الإلكتروني</label>
-              <input type="url" name="website" class="form-control">
-            </div>
-          </div>
+            // إزالة جميع الكلاسات السابقة
+            card.classList.remove('active', 'pending', 'expired');
+            
+            const button = card.querySelector('.choose-pkg');
+            if (!button) return;
 
-          <div class="form-row">
-            <div class="form-group">
-              <label>ساعات العمل</label>
-              <input type="text" name="workingHours" class="form-control" placeholder="مثال: 9ص - 12ص">
-            </div>
-            <div class="form-group">
-              <label>خدمات التوصيل</label>
-              <select class="form-control" name="delivery">
-                <option value="نعم">نعم</option>
-                <option value="لا">لا</option>
-              </select>
-            </div>
-          </div>
+            // إزالة جميع كلاسات الأزرار السابقة
+            button.classList.remove('btn-activate', 'btn-active', 'btn-pending', 'btn-expired', 'btn-trial-used');
 
-          <div class="form-row">
-            <div class="form-group">
-              <label>الباقة</label>
-              <select class="form-control" name="package"></select>
-            </div>
-            <div class="form-group">
-              <label>صورة شعار أو صورة المكان</label>
-              <div class="file-upload">
-                <input type="file" id="placeImage" accept="image/*" onchange="previewImage(this,'placeImagePreview')">
-                <label for="placeImage"><i class="fas fa-cloud-upload-alt"></i><br>اضغط لاختيار صورة</label>
-              </div>
-              <div id="placeImagePreview" class="preview-images"></div>
-            </div>
-          </div>
+            const price = Number(button.dataset.price || 0);
 
-          <div class="form-group">
-            <label>وصف مختصر</label>
-            <textarea name="description" class="form-control" rows="3"></textarea>
-          </div>
+            switch (status) {
+                case 'مفعلة':
+                    card.classList.add('active');
+                    button.classList.add('btn-active');
+                    button.textContent = '✓ مُفعّلة حالياً';
+                    button.disabled = true;
+                    button.style.opacity = '0.6';
+                    break;
 
-          <div class="form-row">
-            <div class="form-group">
-              <label>كلمة المرور</label>
-              <input type="password" name="password" class="form-control" required>
-            </div>
-            <div class="form-group">
-              <label>حالة المكان</label>
-              <select name="status" class="form-control">
-                <option value="مفتوح">مفتوح</option>
-                <option value="مغلق">مغلق</option>
-                <option value="مغلق للصلاة">مغلق للصلاة</option>
-                <option value="تحت التجهيز">تحت التجهيز</option>
-              </select>
-            </div>
-          </div>
+                case 'قيد الدفع':
+                    card.classList.add('pending');
+                    button.classList.add('btn-pending');
+                    button.textContent = '⏳ قيد التحقق من الدفع';
+                    button.disabled = true;
+                    button.style.opacity = '0.6';
+                    break;
 
-          <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> حفظ</button>
-        </form>
-      </div>
+                case 'منتهية':
+                    card.classList.add('expired');
+                    button.classList.add('btn-expired');
+                    button.textContent = '🔄 تجديد الاشتراك';
+                    button.disabled = false;
+                    button.style.opacity = '1';
+                    break;
 
-      <!-- Ads -->
-      <div id="ads-tab" class="tab-content" style="display:none;margin-top:6px">
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px">
-          <h2 style="margin:0"><i class="fas fa-ad"></i> إدارة الإعلانات</h2>
-          <button id="btnAddAd" class="btn ad-btn" onclick="showAddAdForm()"><i class="fas fa-plus"></i> إضافة إعلان</button>
-        </div>
+                default:
+                    // فحص إذا كانت باقة تجريبية مستخدمة سابقاً
+                    if (isTrialUsed && price === 0) {
+                        card.classList.add('expired');
+                        button.classList.add('btn-trial-used');
+                        button.textContent = '❌ تم استخدامها سابقاً';
+                        button.disabled = true;
+                        button.style.opacity = '0.6';
+                    } else {
+                        button.classList.add('btn-activate');
+                        button.textContent = price === 0 ? '🚀 تفعيل تجريبي مجاني' : '💳 اختر هذه الباقة';
+                        button.disabled = false;
+                        button.style.opacity = '1';
+                    }
+                    break;
+            }
+        }
 
-        <div id="adFormContainer">
-          <h3 style="margin-top:0">إضافة / تعديل إعلان</h3>
-          <form id="adForm">
-            <div class="form-row">
-              <div class="form-group">
-                <label>المكان</label>
-                <select name="placeId" class="form-control" required></select>
-              </div>
-              <div class="form-group">
-                <label>نوع الإعلان</label>
-                <select name="adType" class="form-control" required>
-                  <option value="">اختر نوع الإعلان</option>
-                  <option value="عرض">عرض</option>
-                  <option value="اعلان">إعلان</option>
-                </select>
-              </div>
-            </div>
+        // دالة لتحديث جميع بطاقات الباقات
+        function refreshAllPackageCards() {
+            const loggedPlace = getLoggedPlace ? getLoggedPlace() : null;
+            if (!loggedPlace) return;
 
-            <div class="form-row">
-              <div class="form-group">
-                <label>عنوان الإعلان</label>
-                <input type="text" name="adTitle" class="form-control" required>
-              </div>
-              <div class="form-group">
-                <label>كوبون خصم</label>
-                <input type="text" name="coupon" class="form-control">
-              </div>
-            </div>
+            const currentPackageId = loggedPlace.raw?.['الباقة'] || '';
+            const packageStatus = loggedPlace.raw?.['حالة الباقة'] || '';
+            const isTrialUsed = String(loggedPlace.raw?.['حالة الباقة التجريبية'] || '').toLowerCase() === 'true';
 
-            <div class="form-group">
-              <label>وصف الإعلان</label>
-              <textarea name="adDescription" class="form-control" rows="3" required></textarea>
-            </div>
+            // تحديث جميع البطاقات
+            document.querySelectorAll('.pkg-card').forEach(card => {
+                const packageId = card.dataset.packageId || '';
+                
+                if (packageId === currentPackageId) {
+                    updatePackageCardAppearance(packageId, packageStatus, isTrialUsed);
+                } else {
+                    updatePackageCardAppearance(packageId, '', isTrialUsed);
+                }
+            });
+        }
 
-            <div class="form-row">
-              <div class="form-group">
-                <label>تاريخ البداية</label>
-                <input type="date" name="startDate" class="form-control" required>
-              </div>
-              <div class="form-group">
-                <label>تاريخ النهاية</label>
-                <input type="date" name="endDate" class="form-control" required>
-              </div>
-            </div>
+        // // استدعاء التحديث عند تحميل الصفحة
+        // document.addEventListener('DOMContentLoaded', () => {
+        //     // انتظار قليل لضمان تحميل script.js
+        //     setTimeout(refreshAllPackageCards, 500);
+        // });
+        ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-            <div class="form-group">
-              <label>صور الإعلان (حتى 8 صور)</label>
-              <div class="file-upload">
-                <input type="file" id="adImages" accept="image/*" multiple onchange="previewMultipleImages(this,'adImagesPreview')">
-                <label for="adImages"><i class="fas fa-images"></i><br>اضغط لاختيار الصور (حتى 8)</label>
-              </div>
-              <div id="adImagesPreview" class="preview-images"></div>
-            </div>
+        document.addEventListener('DOMContentLoaded', function() {
+            // تهيئة المظهر
+            try {
+                const saved = localStorage.getItem('ban_theme');
+                if (saved) applyTheme(saved);
+                else {
+                    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    applyTheme(prefersDark ? 'dark' : 'light');
+                }
+            } catch (e) { applyTheme('light'); }
 
-            <div class="form-group">
-              <label>فيديو الإعلان (اختياري)</label>
-              <div class="file-upload">
-                <input type="file" id="adVideo" accept="video/*" onchange="previewVideo(this,'adVideoPreview')">
-                <label for="adVideo"><i class="fas fa-video"></i><br>اضغط لاختيار الفيديو</label>
-              </div>
-              <div id="adVideoPreview"></div>
-            </div>
+            // انتظار تحميل script.js ثم تشغيل الدوال
+            setTimeout(function() {
+                if (typeof refreshAllPackageCards !== 'undefined') {
+                    refreshAllPackageCards();
+                }
+                if (typeof refreshPackageUIFromDashboard !== 'undefined') {
+                    refreshPackageUIFromDashboard();
+                }
+            }, 1000);
+        });
 
-            <div class="form-row">
-              <div class="form-group">
-                <label>حالة الإعلان</label>
-                <select name="adActiveStatus" class="form-control" required>
-                  <option value="نشط">نشط</option>
-                  <option value="غير نشط">غير نشط</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label>الحالة العامة</label>
-                <select name="adStatus" class="form-control" required>
-                  <option value="مفتوح">مفتوح</option>
-                  <option value="مغلق">مغلق</option>
-                </select>
-              </div>
-            </div>
 
-            <button type="submit" class="btn ad-btn"><i class="fas fa-save"></i> حفظ الإعلان</button>
-          </form>
-        </div>
+        ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        <div id="adsListContainer" style="margin-top:12px"></div>
-      </div>
 
-      <!-- Packages -->
-      <div id="packages-tab" class="tab-content" style="display:none;margin-top:6px">
-        <h2><i class="fas fa-gift"></i> الباقات</h2>
-        <div id="packagesGrid" style="margin-top:12px"></div>
-      </div>
-    </div>
+        ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    <div class="loading" id="loading"><div class="spinner"></div><p style="color:var(--text-color)">جاري المعالجة...</p></div>
-    <div class="alert alert-success" id="successAlert"><i class="fas fa-check-circle"></i> تم بنجاح</div>
-    <div class="alert alert-error" id="errorAlert"><i class="fas fa-exclamation-circle"></i> حدث خطأ</div>
-  </div>
 
-  <!-- Login modal -->
-  <div id="loginModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center">
-    <div style="background:var(--card-bg);max-width:420px;width:90%;border-radius:12px;padding:18px;margin:auto;direction:rtl">
-      <h3 style="margin-bottom:10px">دخول صاحب المحل</h3>
-      <form id="loginForm">
-        <div style="margin-bottom:10px">
-          <label style="display:block;font-weight:600;margin-bottom:6px">رقم التواصل أو رقم المكان</label>
-          <input type="text" name="phoneOrId" class="form-control" placeholder="أدخل رقم التواصل أو ID المكان" required>
-        </div>
-        <div style="margin-bottom:12px">
-          <label style="display:block;font-weight:600;margin-bottom:6px">كلمة المرور</label>
-          <input type="password" name="password" class="form-control" placeholder="كلمة المرور" required>
-        </div>
-        <div style="display:flex;gap:8px;justify-content:flex-end">
-          <button type="button" id="loginCancel" class="btn btn-secondary">إلغاء</button>
-          <button type="submit" class="btn btn-primary">دخول</button>
-        </div>
-      </form>
-    </div>
-  </div>
+        // دالة للحصول على المكان المسجل
+    function getLoggedPlace() {
+        try {
+            const raw = localStorage.getItem('khedmatak_place');
+            return raw ? JSON.parse(raw) : null;
+        } catch (e) {
+            return null;
+        }
+    }
 
-  <script src="script.js"></script>
+    // دالة مساعدة للتحقق من وجود دالة
+    function isFunction(functionToCheck) {
+        return functionToCheck && {}.toString.call(functionToCheck) === '[object Function]';
+    }
+
+    // دالة لتحديث حالة الزر بناءً على سعر الباقة
+    function updateButtonBasedOnPrice(button, price, isTrialUsed) {
+        if (price === '0' && isTrialUsed) {
+            button.classList.add('btn-trial-used');
+            button.textContent = '❌ تم استخدامها سابقاً';
+            button.disabled = true;
+        } else if (price === '0') {
+            button.classList.add('btn-activate');
+            button.textContent = '🚀 تفعيل تجريبي مجاني';
+            button.disabled = false;
+        } else {
+            button.classList.add('btn-activate');
+            button.textContent = '💳 اختر هذه الباقة';
+            button.disabled = false;
+        }
+    }
+
+        ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+    </script>
+    <script src="script.js"></script>
 </body>
 </html>
