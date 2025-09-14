@@ -110,6 +110,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (typeof fixCountdownVisibility === 'function') {
       fixCountdownVisibility();
     }
+    // إجبار إظهار العدادات
+    if (typeof forceShowCountdowns === 'function') {
+      forceShowCountdowns();
+    }
   }, 2000);
 });
 
@@ -1288,12 +1292,21 @@ function showPackageStatusBar(place) {
       // التأكد من أن العداد موجود قبل بدء العدّاد
       if (countdown) {
         countdown.textContent = 'جاري التحميل...';
+        countdown.style.display = 'block';
+        countdown.style.visibility = 'visible';
+        countdown.style.opacity = '1';
+        console.log('بدء العدّاد مع تاريخ الانتهاء:', endDate.toISOString());
         startPackageStatusCountdown(endDate, countdown);
       } else {
         console.error('Countdown element not found!');
       }
     } else {
-      if (countdown) countdown.textContent = 'لا يوجد تاريخ انتهاء';
+      if (countdown) {
+        countdown.textContent = 'لا يوجد تاريخ انتهاء';
+        countdown.style.display = 'block';
+        countdown.style.visibility = 'visible';
+        countdown.style.opacity = '1';
+      }
     }
   } else if (pkgStatus === 'قيد الدفع') {
     const pn = packageName || (pkgId ? `الباقة ${pkgId}` : 'باقة غير معروفة');
@@ -1741,6 +1754,166 @@ function fixCountdownVisibility() {
   });
   
   console.log(`✓ تم إصلاح ${allCountdowns.length} عداد إضافي`);
+}
+
+// دالة تشخيص شاملة للعدادات
+function debugCountdowns() {
+  console.log('=== تشخيص شامل للعدادات ===');
+  
+  // 1. فحص العناصر
+  const countdownElements = [
+    'packageStatusCountdown',
+    'packageInfoCountdown', 
+    'currentPackageCountdown',
+    'packageCountdown'
+  ];
+  
+  countdownElements.forEach(id => {
+    const element = document.getElementById(id);
+    if (element) {
+      console.log(`✓ العداد موجود: ${id}`);
+      console.log(`  - النص الحالي: "${element.textContent}"`);
+      console.log(`  - العرض: ${element.style.display || 'default'}`);
+      console.log(`  - الشفافية: ${element.style.opacity || 'default'}`);
+    } else {
+      console.log(`✗ العداد غير موجود: ${id}`);
+    }
+  });
+  
+  // 2. فحص بيانات الباقة
+  const logged = getLoggedPlace();
+  if (logged && logged.raw) {
+    console.log('=== بيانات الباقة ===');
+    console.log('حالة الباقة:', logged.raw['حالة الباقة']);
+    console.log('الباقة:', logged.raw['الباقة']);
+    console.log('تاريخ بداية الاشتراك:', logged.raw['تاريخ بداية الاشتراك']);
+    console.log('تاريخ نهاية الاشتراك:', logged.raw['تاريخ نهاية الاشتراك']);
+    
+    const endDate = parseDateISO(logged.raw['تاريخ نهاية الاشتراك']);
+    if (endDate) {
+      console.log('تاريخ الانتهاء المحلل:', endDate.toISOString());
+      const now = new Date();
+      const diff = endDate.getTime() - now.getTime();
+      console.log('الوقت المتبقي (ملي ثانية):', diff);
+      console.log('الوقت المتبقي (أيام):', Math.floor(diff / (1000 * 60 * 60 * 24)));
+    } else {
+      console.log('✗ لا يمكن تحليل تاريخ الانتهاء');
+    }
+  } else {
+    console.log('✗ لا توجد بيانات مكان مسجل');
+  }
+  
+  // 3. اختبار عداد تجريبي
+  const mainCountdown = document.getElementById('packageStatusCountdown');
+  if (mainCountdown) {
+    console.log('=== اختبار عداد تجريبي ===');
+    const testDate = new Date();
+    testDate.setMinutes(testDate.getMinutes() + 30); // 30 دقيقة من الآن
+    console.log('تاريخ الاختبار:', testDate.toISOString());
+    startPackageStatusCountdown(testDate, mainCountdown);
+  }
+}
+
+// دالة لإجبار إظهار العدادات
+function forceShowCountdowns() {
+  console.log('=== إجبار إظهار العدادات ===');
+  
+  const logged = getLoggedPlace();
+  if (!logged || !logged.raw) {
+    console.log('✗ لا توجد بيانات مكان مسجل');
+    return;
+  }
+  
+  const pkgStatus = String(logged.raw['حالة الباقة'] || '').trim();
+  const endDateRaw = logged.raw['تاريخ نهاية الاشتراك'] || '';
+  
+  console.log('حالة الباقة:', pkgStatus);
+  console.log('تاريخ نهاية الاشتراك:', endDateRaw);
+  
+  if (pkgStatus === 'مفعلة' && endDateRaw) {
+    const endDate = parseDateISO(endDateRaw);
+    if (endDate) {
+      console.log('تاريخ الانتهاء المحلل:', endDate.toISOString());
+      
+      // إجبار إظهار العداد الرئيسي
+      const mainCountdown = document.getElementById('packageStatusCountdown');
+      if (mainCountdown) {
+        mainCountdown.style.display = 'block';
+        mainCountdown.style.visibility = 'visible';
+        mainCountdown.style.opacity = '1';
+        mainCountdown.style.background = 'rgba(255, 255, 255, 0.95)';
+        mainCountdown.style.color = '#1f2937';
+        mainCountdown.style.padding = '10px 15px';
+        mainCountdown.style.borderRadius = '6px';
+        mainCountdown.style.fontWeight = '600';
+        mainCountdown.style.fontSize = '16px';
+        mainCountdown.style.textAlign = 'center';
+        mainCountdown.style.border = '1px solid rgba(0, 0, 0, 0.1)';
+        mainCountdown.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
+        mainCountdown.style.zIndex = '100';
+        mainCountdown.style.position = 'relative';
+        
+        console.log('بدء العدّاد الرئيسي...');
+        startPackageStatusCountdown(endDate, mainCountdown);
+      } else {
+        console.error('✗ العداد الرئيسي غير موجود');
+      }
+      
+      // إجبار إظهار عداد النموذج
+      const formCountdown = document.getElementById('packageInfoCountdown');
+      if (formCountdown) {
+        formCountdown.style.display = 'block';
+        formCountdown.style.visibility = 'visible';
+        formCountdown.style.opacity = '1';
+        formCountdown.style.background = 'rgba(255, 255, 255, 0.95)';
+        formCountdown.style.color = '#1f2937';
+        formCountdown.style.padding = '8px 12px';
+        formCountdown.style.borderRadius = '6px';
+        formCountdown.style.fontWeight = '600';
+        formCountdown.style.fontSize = '14px';
+        formCountdown.style.border = '1px solid rgba(0, 0, 0, 0.1)';
+        formCountdown.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)';
+        formCountdown.style.zIndex = '100';
+        formCountdown.style.position = 'relative';
+        
+        console.log('بدء عداد النموذج...');
+        const update = () => {
+          const dh = diffDaysHours(new Date(), endDate);
+          const days = dh.days ?? 0;
+          const hours = dh.hours ?? 0;
+          const minutes = Math.floor((dh.ms % (1000 * 60 * 60)) / (1000 * 60));
+          
+          let countdownText = '';
+          if (days > 0) {
+            countdownText = `العدّاد: ${days} يوم`;
+            if (hours > 0) {
+              countdownText += ` و${hours} ساعة`;
+            }
+          } else if (hours > 0) {
+            countdownText = `العدّاد: ${hours} ساعة`;
+            if (minutes > 0) {
+              countdownText += ` و${minutes} دقيقة`;
+            }
+          } else {
+            countdownText = `العدّاد: ${minutes} دقيقة`;
+          }
+          
+          formCountdown.textContent = countdownText;
+          formCountdown.classList.remove('countdown-ok','countdown-warn','countdown-crit');
+          if (dh.ms <= 48*60*60*1000) formCountdown.classList.add('countdown-crit');
+          else if (dh.ms <= 7*24*60*60*1000) formCountdown.classList.add('countdown-warn');
+          else formCountdown.classList.add('countdown-ok');
+        };
+        update();
+        clearInterval(formCountdown._timer);
+        formCountdown._timer = setInterval(update, 60 * 1000);
+      }
+    } else {
+      console.log('✗ لا يمكن تحليل تاريخ الانتهاء');
+    }
+  } else {
+    console.log('✗ الباقة غير مفعلة أو لا يوجد تاريخ انتهاء');
+  }
 }
 
 // دالة اختبار لإظهار شريط الباقة
