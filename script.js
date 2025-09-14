@@ -1280,7 +1280,7 @@ function showPackageStatusBar(place) {
     if (title) title.textContent = `📦 ${pn}`;
     
     let detailsText = 'حالة الباقة: مفعلة';
-    if (startDate && endDate) {
+    if (startDate && endDate && !isNaN(startDate.getTime()) && !isNaN(endDate.getTime())) {
       const sTxt = startDate.toISOString().split('T')[0];
       const eTxt = endDate.toISOString().split('T')[0];
       detailsText += ` • البداية: ${sTxt} • النهاية: ${eTxt}`;
@@ -1532,7 +1532,7 @@ async function handlePositionAndFill(lat, lng) {
       try { mapEl.dispatchEvent(new Event('input', { bubbles: true })); } catch(e){}
       try { mapEl.dispatchEvent(new Event('change', { bubbles: true })); } catch(e){}
     }
-    const msgEl = document.getElementById('placeStatusMessage'); if (msgEl) msg.textContent = `الإحداثيات: ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+    const msgEl = document.getElementById('placeStatusMessage'); if (msgEl) msgEl.textContent = `الإحداثيات: ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
     const geo = await reverseGeocodeNominatim(lat, lng);
     if (!geo) return;
     const detailed = geo.display_name || '';
@@ -1639,20 +1639,32 @@ function startPackageCountdown(endDate) {
 function parseDateISO(d) {
   if (!d) return null;
   try {
-    if (d instanceof Date) return d;
+    if (d instanceof Date) {
+      return isNaN(d.getTime()) ? null : d;
+    }
     const s = String(d).trim();
     if (!s) return null;
+    
+    // محاولة تحليل تنسيق YYYY-MM-DD
     const parts = s.split('-');
     if (parts.length === 3) {
       const y = Number(parts[0]), m = Number(parts[1]) - 1, day = Number(parts[2]);
+      if (isNaN(y) || isNaN(m) || isNaN(day)) return null;
       const dt = new Date(y, m, day);
+      if (isNaN(dt.getTime())) return null;
       // تحديد الساعة على نهاية اليوم (23:59:59) للعدّاد
       dt.setHours(23,59,59,999);
       return dt;
     }
+    
+    // محاولة تحليل تنسيقات أخرى
     const dt2 = new Date(s);
-    return isNaN(dt2.getTime()) ? null : dt2;
-  } catch { return null; }
+    if (isNaN(dt2.getTime())) return null;
+    return dt2;
+  } catch (e) {
+    console.warn('parseDateISO error:', e, 'for input:', d);
+    return null;
+  }
 }
 
 // دالة مساعدة لإنشاء تاريخ انتهاء للاختبار
@@ -2140,7 +2152,7 @@ async function refreshPackageUIFromDashboard() {
     if (pkgStatus === 'مفعلة') {
       if (btn) { btn.disabled = true; btn.style.opacity = '0.8'; btn.textContent = 'الاشتراك مُفعّل'; }
       let msg = 'حالة الباقة: مفعلة';
-      if (startDate && endDate) {
+      if (startDate && endDate && !isNaN(startDate.getTime()) && !isNaN(endDate.getTime())) {
         const sTxt = startDate.toISOString().split('T')[0];
         const eTxt = endDate.toISOString().split('T')[0];
         msg += ` — البداية: ${sTxt} · النهاية: ${eTxt}${remaining !== null ? ` · المتبقي: ${remaining} يوم` : ''}`;
@@ -2149,7 +2161,10 @@ async function refreshPackageUIFromDashboard() {
 
       [card, inlineCard].forEach(c => { if (c) c.style.display = 'block'; });
       const pn = packageName || (pkgId ? `ID ${pkgId}` : 'غير معروفة');
-      const eTxt = endDate ? endDate.toISOString().split('T')[0] : '';
+      let eTxt = '';
+      if (endDate && !isNaN(endDate.getTime())) {
+        eTxt = endDate.toISOString().split('T')[0];
+      }
       const remTxt = remaining !== null ? ` — المتبقي ${remaining} يوم` : '';
       if (cardText) cardText.textContent = `باقتك الحالية: ${pn}${eTxt ? ` — تنتهي في ${eTxt}` : ''}${remTxt}`;
       if (inlineText) inlineText.textContent = `باقتك الحالية: ${pn}${eTxt ? ` — تنتهي في ${eTxt}` : ''}${remTxt}`;
@@ -2181,7 +2196,7 @@ async function refreshPackageUIFromDashboard() {
       clearPackageCountdown();
       if (btn) { btn.disabled = false; btn.style.opacity = '1'; btn.textContent = 'تجديد الاشتراك'; }
       let msg = 'حالة الباقة: منتهية';
-      if (startDate && endDate) {
+      if (startDate && endDate && !isNaN(startDate.getTime()) && !isNaN(endDate.getTime())) {
         const sTxt = startDate.toISOString().split('T')[0];
         const eTxt = endDate.toISOString().split('T')[0];
         msg += ` — البداية: ${sTxt} · النهاية: ${eTxt}`;
@@ -2189,7 +2204,10 @@ async function refreshPackageUIFromDashboard() {
       if (hint) { hint.textContent = msg; hint.classList.add('expired'); }
       [card, inlineCard].forEach(c => { if (c) c.style.display = 'block'; });
       const pn = packageName || (pkgId ? `ID ${pkgId}` : 'غير معروفة');
-      const eTxt = endDate ? endDate.toISOString().split('T')[0] : '';
+      let eTxt = '';
+      if (endDate && !isNaN(endDate.getTime())) {
+        eTxt = endDate.toISOString().split('T')[0];
+      }
       if (cardText) cardText.textContent = `باقتك الحالية: ${pn} — الحالة: منتهية${eTxt ? ` — انتهت في ${eTxt}` : ''}`;
       if (inlineText) inlineText.textContent = `باقتك الحالية: ${pn} — الحالة: منتهية${eTxt ? ` — انتهت في ${eTxt}` : ''}`;
       return;
@@ -2360,7 +2378,10 @@ function updateInlinePackageInfoCard(place) {
       let remaining = (startDate && endDate) ? daysBetween(today, endDate) : null;
       if (remaining !== null && remaining < 0) remaining = 0;
       const pn = packageName || (pkgId ? `ID ${pkgId}` : 'غير معروفة');
-      const eTxt = endDate ? endDate.toISOString().split('T')[0] : '';
+      let eTxt = '';
+      if (endDate && !isNaN(endDate.getTime())) {
+        eTxt = endDate.toISOString().split('T')[0];
+      }
       text.textContent = `باقتك الحالية: ${pn}${eTxt ? ` — تنتهي في ${eTxt}` : ''}${remaining !== null ? ` — المتبقي ${remaining} يوم` : ''}`;
       card.style.display = 'block';
 
@@ -2409,7 +2430,10 @@ function updateInlinePackageInfoCard(place) {
 
     if (pkgStatus === 'منتهية') {
       const pn = packageName || (pkgId ? `ID ${pkgId}` : 'غير معروفة');
-      const eTxt = endDate ? endDate.toISOString().split('T')[0] : '';
+      let eTxt = '';
+      if (endDate && !isNaN(endDate.getTime())) {
+        eTxt = endDate.toISOString().split('T')[0];
+      }
       text.textContent = `باقتك الحالية: ${pn} — الحالة: منتهية${eTxt ? ` — انتهت في ${eTxt}` : ''}`;
       card.style.display = 'block';
       return;
