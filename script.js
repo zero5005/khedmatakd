@@ -1408,6 +1408,7 @@ let packageStatusCountdownTimer = null;
 
 function startPackageStatusCountdown(endDate, countdownEl) {
   if (!countdownEl || !endDate) {
+    console.error('startPackageStatusCountdown: Missing countdownEl or endDate');
     return;
   }
   
@@ -1426,8 +1427,25 @@ function startPackageStatusCountdown(endDate, countdownEl) {
     
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
     const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
     
-    countdownEl.textContent = `متبقي ${days} يوم و${hours} ساعة`;
+    // عرض العدّاد بتنسيق أفضل
+    let countdownText = '';
+    if (days > 0) {
+      countdownText = `متبقي ${days} يوم`;
+      if (hours > 0) {
+        countdownText += ` و${hours} ساعة`;
+      }
+    } else if (hours > 0) {
+      countdownText = `متبقي ${hours} ساعة`;
+      if (minutes > 0) {
+        countdownText += ` و${minutes} دقيقة`;
+      }
+    } else {
+      countdownText = `متبقي ${minutes} دقيقة`;
+    }
+    
+    countdownEl.textContent = countdownText;
     
     // تحديث الألوان حسب الوقت المتبقي
     countdownEl.className = 'package-countdown-display';
@@ -1661,10 +1679,30 @@ function startPackageCountdown(endDate) {
     }
     const dayMs = 1000*60*60*24;
     const hourMs = 1000*60*60;
+    const minuteMs = 1000*60;
     const days = Math.floor(diff / dayMs);
     diff -= days * dayMs;
     const hours = Math.floor(diff / hourMs);
-    el.textContent = `العدّاد: ${days} يوم و${hours} ساعة`;
+    diff -= hours * hourMs;
+    const minutes = Math.floor(diff / minuteMs);
+    
+    // عرض العدّاد بتنسيق أفضل
+    let countdownText = '';
+    if (days > 0) {
+      countdownText = `العدّاد: ${days} يوم`;
+      if (hours > 0) {
+        countdownText += ` و${hours} ساعة`;
+      }
+    } else if (hours > 0) {
+      countdownText = `العدّاد: ${hours} ساعة`;
+      if (minutes > 0) {
+        countdownText += ` و${minutes} دقيقة`;
+      }
+    } else {
+      countdownText = `العدّاد: ${minutes} دقيقة`;
+    }
+    
+    el.textContent = countdownText;
   }
   tick();
   packageCountdownTimer = setInterval(tick, 60 * 1000);
@@ -1709,6 +1747,38 @@ function testCountdown() {
   const testEndDate = createTestEndDate(5); // 5 أيام من الآن
   console.log('Testing countdown with end date:', testEndDate.toISOString());
   startPackageStatusCountdown(testEndDate, countdownEl);
+}
+
+// دالة اختبار سريعة للعدادات
+function quickTestCountdown() {
+  console.log('=== اختبار سريع للعدادات ===');
+  
+  // اختبار العداد الرئيسي
+  const mainCountdown = document.getElementById('packageStatusCountdown');
+  if (mainCountdown) {
+    console.log('✓ العداد الرئيسي موجود');
+    const testDate = new Date();
+    testDate.setMinutes(testDate.getMinutes() + 30); // 30 دقيقة من الآن
+    startPackageStatusCountdown(testDate, mainCountdown);
+  } else {
+    console.error('✗ العداد الرئيسي غير موجود');
+  }
+  
+  // اختبار عداد النموذج
+  const formCountdown = document.getElementById('packageInfoCountdown');
+  if (formCountdown) {
+    console.log('✓ عداد النموذج موجود');
+  } else {
+    console.error('✗ عداد النموذج غير موجود');
+  }
+  
+  // اختبار عداد البطاقة
+  const cardCountdown = document.getElementById('currentPackageCountdown');
+  if (cardCountdown) {
+    console.log('✓ عداد البطاقة موجود');
+  } else {
+    console.error('✗ عداد البطاقة غير موجود');
+  }
 }
 
 // دالة اختبار لإظهار شريط الباقة
@@ -1892,7 +1962,25 @@ async function refreshPackageUIFromDashboard() {
         const dh = diffDaysHours(new Date(), end);
         const days = dh.days ?? 0;
         const hours = dh.hours ?? 0;
-        el.textContent = `العدّاد: ${days} يوم و${hours} ساعة`;
+        const minutes = Math.floor((dh.ms % (1000 * 60 * 60)) / (1000 * 60));
+        
+        // عرض العدّاد بتنسيق أفضل
+        let countdownText = '';
+        if (days > 0) {
+          countdownText = `العدّاد: ${days} يوم`;
+          if (hours > 0) {
+            countdownText += ` و${hours} ساعة`;
+          }
+        } else if (hours > 0) {
+          countdownText = `العدّاد: ${hours} ساعة`;
+          if (minutes > 0) {
+            countdownText += ` و${minutes} دقيقة`;
+          }
+        } else {
+          countdownText = `العدّاد: ${minutes} دقيقة`;
+        }
+        
+        el.textContent = countdownText;
         el.classList.remove('countdown-ok','countdown-warn','countdown-crit');
         if (dh.ms <= 48*60*60*1000) el.classList.add('countdown-crit');
         else if (dh.ms <= 7*24*60*60*1000) el.classList.add('countdown-warn');
@@ -2146,7 +2234,25 @@ function updateInlinePackageInfoCard(place) {
           const dh = diffDaysHours(new Date(), endDate);
           const days = dh.days ?? 0;
           const hours = dh.hours ?? 0;
-          countdown.textContent = `العدّاد: ${days} يوم و${hours} ساعة`;
+          const minutes = Math.floor((dh.ms % (1000 * 60 * 60)) / (1000 * 60));
+          
+          // عرض العدّاد بتنسيق أفضل
+          let countdownText = '';
+          if (days > 0) {
+            countdownText = `العدّاد: ${days} يوم`;
+            if (hours > 0) {
+              countdownText += ` و${hours} ساعة`;
+            }
+          } else if (hours > 0) {
+            countdownText = `العدّاد: ${hours} ساعة`;
+            if (minutes > 0) {
+              countdownText += ` و${minutes} دقيقة`;
+            }
+          } else {
+            countdownText = `العدّاد: ${minutes} دقيقة`;
+          }
+          
+          countdown.textContent = countdownText;
           countdown.classList.remove('countdown-ok','countdown-warn','countdown-crit');
           if (dh.ms <= 48*60*60*1000) countdown.classList.add('countdown-crit');
           else if (dh.ms <= 7*24*60*60*1000) countdown.classList.add('countdown-warn');
