@@ -104,6 +104,13 @@ document.addEventListener('DOMContentLoaded', () => {
   initPlaceStatusButtons();
 
   updateActivateButtonState();
+  
+  // إصلاح وضوح العدادات بعد تحميل الصفحة
+  setTimeout(() => {
+    if (typeof fixCountdownVisibility === 'function') {
+      fixCountdownVisibility();
+    }
+  }, 2000);
 });
 
 function initializeApp() {
@@ -130,99 +137,6 @@ function setupEventListeners() {
   const pkgSelect = document.querySelector('select[name="package"]');
   if (pkgSelect) pkgSelect.addEventListener('change', updateActivateButtonState);
 }
-
-/* ========== Lookups & populate ========== */
-// async function loadLookupsAndPopulate() {
-//   try {
-//     const resp = await apiFetch(`${API_URL}?action=getLookups`);
-//     if (!resp.ok) { console.warn('getLookups failed', resp); return; }
-//     const json = resp.data;
-//     const data = (json && json.success && json.data) ? json.data : json;
-//     if (!data) return;
-
-//     window.lastLookups = data; // حفظ آخر القوائم
-
-//     const actSelect = document.querySelector('select[name="activityType"]');
-//     if (actSelect) {
-//       actSelect.innerHTML = '<option value="">اختر نوع النشاط</option>';
-//       (data.activities || []).forEach(a => {
-//         const opt = document.createElement('option'); opt.value = a.id; opt.textContent = a.name; actSelect.appendChild(opt);
-//       });
-//     }
-
-//     const citySelect = document.querySelector('select[name="city"]');
-//     if (citySelect) {
-//       citySelect.innerHTML = '<option value="">اختر المدينة</option>';
-//       (data.cities || []).forEach(c => {
-//         const opt = document.createElement('option'); opt.value = c.id; opt.textContent = c.name; citySelect.appendChild(opt);
-//       });
-//     }
-
-//     const cityAreaMap = {};
-//     (data.areas || []).forEach(a => {
-//       const cid = a.raw && (a.raw['ID المدينة'] || a.raw['cityId']) ? String(a.raw['ID المدينة'] || a.raw['cityId']) : '';
-//       if (!cityAreaMap[cid]) cityAreaMap[cid] = [];
-//       cityAreaMap[cid].push({ id: a.id, name: a.name });
-//     });
-//     window.cityAreaMap = cityAreaMap;
-
-//     const siteSelects = document.querySelectorAll('select[name="location"]');
-//     siteSelects.forEach(s => {
-//       s.innerHTML = '<option value="">اختر الموقع</option>';
-//       (data.sites || []).forEach(site => {
-//         const opt = document.createElement('option'); opt.value = site.id; opt.textContent = site.name; s.appendChild(opt);
-//       });
-//     });
-
-//     const pkgSelect = document.querySelector('select[name="package"]');
-//     if (pkgSelect) {
-//       pkgSelect.innerHTML = '<option value="">اختر الباقة</option>';
-//       (data.packages || []).forEach(p => {
-//         const opt = document.createElement('option');
-//         opt.value = p.id;
-//         const dur = Number(p.duration || (p.raw && (p.raw['مدة الباقة باليوم'] || p.raw['مدة'])) || 0) || 0;
-//         const price = Number(p.price || (p.raw && (p.raw['سعر الباقة'] || p.raw['السعر'])) || 0) || 0;
-//         const allowed = Number(p.allowedAds || (p.raw && (p.raw['عدد الاعلانات'] || p.raw['عدد_الاعلانات'])) || 0) || 0;
-//         opt.textContent = `${p.name} — المدة: ${dur} يوم · السعر: ${price} · الإعلانات: ${allowed}`;
-//         opt.dataset.duration = String(dur);
-//         opt.dataset.price = String(price);
-//         opt.dataset.allowed = String(allowed);
-//         pkgSelect.appendChild(opt);
-//       });
-//     }
-
-//     const pkgGrid = document.getElementById('packagesGrid');
-//     if (pkgGrid) {
-//       pkgGrid.innerHTML = '';
-//       (data.packages || []).forEach(p => {
-//         const div = document.createElement('div'); div.className = 'pkg-card';
-//         const h = document.createElement('h3'); h.textContent = p.name;
-//         const dur = Number(p.duration || (p.raw && (p.raw['مدة الباقة باليوم'] || p.raw['مدة'])) || 0) || 0;
-//         const price = Number(p.price || (p.raw && (p.raw['سعر الباقة'] || p.raw['السعر'])) || 0) || 0;
-//         const allowed = Number(p.allowedAds || (p.raw && (p.raw['عدد الاعلانات'] || p.raw['عدد_الاعلانات'])) || 0) || 0;
-//         const d = document.createElement('p'); d.textContent = `المدة: ${dur} يوم · السعر: ${price} · الإعلانات: ${allowed}`;
-//         const desc = document.createElement('p'); desc.textContent = p.raw && (p.raw['وصف الباقة'] || p.raw['description']) ? (p.raw['وصف الباقة'] || p.raw['description']) : '';
-//         const btn = document.createElement('button'); btn.className = 'choose-pkg'; btn.textContent = 'اختر الباقة';
-//         btn.onclick = () => choosePackageAPI(p.id);
-//         div.appendChild(h); div.appendChild(d); if (desc.textContent) div.appendChild(desc); div.appendChild(btn);
-//         pkgGrid.appendChild(div);
-//       });
-//     }
-
-//     window.availablePaymentMethods = (data.payments || data.paymentsMethods || []).map(pm => ({ id: pm.id || pm.raw && pm.raw['معرف الدفع'], name: pm.name || pm.raw && (pm.raw['طرق الدفع'] || pm.raw['طريقة الدفع']), raw: pm.raw || pm }));
-//     const stored = getLoggedPlace();
-//     if (stored && stored.raw) {
-//       await tryPrefillPlaceForm(stored);
-//       if (stored.id) { if (typeof checkAdQuotaAndToggle === 'function') checkAdQuotaAndToggle(stored.id); if (typeof loadAdsForPlace === 'function') loadAdsForPlace(stored.id); }
-//     }
-
-//     if (typeof updateAdsTabVisibility === 'function') updateAdsTabVisibility();
-//     updateActivateButtonState();
-//   } catch (err) {
-//     console.error('loadLookupsAndPopulate error', err);
-//   }
-// }
-
 
 /* ========== Lookups & populate ========== */
 async function loadLookupsAndPopulate() {
@@ -1779,6 +1693,54 @@ function quickTestCountdown() {
   } else {
     console.error('✗ عداد البطاقة غير موجود');
   }
+}
+
+// دالة لإصلاح وضوح العدادات
+function fixCountdownVisibility() {
+  console.log('=== إصلاح وضوح العدادات ===');
+  
+  const countdownElements = [
+    'packageStatusCountdown',
+    'packageInfoCountdown', 
+    'currentPackageCountdown',
+    'packageCountdown'
+  ];
+  
+  countdownElements.forEach(id => {
+    const element = document.getElementById(id);
+    if (element) {
+      // إزالة أي تأثيرات قد تخفي العداد
+      element.style.opacity = '1';
+      element.style.visibility = 'visible';
+      element.style.display = 'block';
+      element.style.zIndex = '100';
+      element.style.position = 'relative';
+      element.style.background = 'rgba(255, 255, 255, 0.95)';
+      element.style.color = '#1f2937';
+      element.style.textShadow = 'none';
+      element.style.filter = 'none';
+      
+      console.log(`✓ تم إصلاح وضوح العداد: ${id}`);
+    } else {
+      console.log(`✗ العداد غير موجود: ${id}`);
+    }
+  });
+  
+  // إصلاح جميع عناصر العدادات
+  const allCountdowns = document.querySelectorAll('.package-countdown-display, .package-countdown');
+  allCountdowns.forEach(element => {
+    element.style.opacity = '1';
+    element.style.visibility = 'visible';
+    element.style.display = 'block';
+    element.style.zIndex = '100';
+    element.style.position = 'relative';
+    element.style.background = 'rgba(255, 255, 255, 0.95)';
+    element.style.color = '#1f2937';
+    element.style.textShadow = 'none';
+    element.style.filter = 'none';
+  });
+  
+  console.log(`✓ تم إصلاح ${allCountdowns.length} عداد إضافي`);
 }
 
 // دالة اختبار لإظهار شريط الباقة
