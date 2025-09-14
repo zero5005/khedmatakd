@@ -1686,6 +1686,15 @@ function parseSheetDate(dateStr) {
       return dt;
     }
     
+    // تنسيق ISO مع الوقت (مثل: 2025-12-11T22:00:00.000Z)
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(s)) {
+      const dt = new Date(s);
+      if (isNaN(dt.getTime())) return null;
+      // تحديد الساعة على نهاية اليوم (23:59:59) للعدّاد
+      dt.setHours(23,59,59,999);
+      return dt;
+    }
+    
     // تنسيقات أخرى
     const dt = new Date(s);
     if (isNaN(dt.getTime())) return null;
@@ -1713,6 +1722,8 @@ function testDateParsing() {
     '2025-12-12',
     '2025-01-01',
     '2025-12-31',
+    '2025-12-11T22:00:00.000Z',
+    '2025-12-11T22:00:00.000Z',
     'invalid-date',
     '',
     null,
@@ -1762,6 +1773,32 @@ function testCountdownWithRealDates() {
   } else {
     console.log('✗ فشل تحليل التواريخ');
   }
+}
+
+// دالة لاختبار التواريخ الجديدة
+function testNewDateFormats() {
+  console.log('=== اختبار التواريخ الجديدة ===');
+  
+  const testDates = [
+    '2025-12-11T22:00:00.000Z',
+    '2025-12-11T22:00:00.000Z',
+    '2025-09-13T00:00:00.000Z',
+    '2025-12-12T23:59:59.999Z'
+  ];
+  
+  testDates.forEach(dateStr => {
+    console.log(`اختبار: "${dateStr}"`);
+    const parsed = parseSheetDate(dateStr);
+    if (parsed) {
+      console.log(`  ✓ محلل: ${parsed.toISOString()}`);
+      const now = new Date();
+      const diff = parsed.getTime() - now.getTime();
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      console.log(`  الوقت المتبقي: ${days} يوم`);
+    } else {
+      console.log(`  ✗ فشل التحليل`);
+    }
+  });
 }
 
 // دالة اختبار للعداد
