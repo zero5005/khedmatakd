@@ -46,21 +46,42 @@ function initTheme() {
 }
 
 /* ========== API helpers ========== */
-async function apiFetch(url, opts = {}) {
-  try {
-    const res = await fetch(url, opts);
-    const text = await res.text();
-    let data = null;
-    try { data = JSON.parse(text); } catch (e) { data = text; }
-    return { ok: res.ok, status: res.status, data, raw: text };
-  } catch (err) {
-    return { ok: false, status: 0, error: err.message || String(err) };
+async function apiFetch(url, opts = {}, retries = 3, delay = 1000) {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const res = await fetch(url, opts);
+      const text = await res.text();
+      let data = null;
+      try { data = JSON.parse(text); } catch (e) { data = text; }
+      return { ok: res.ok, status: res.status, data, raw: text };
+    } catch (err) {
+      const isLastAttempt = attempt === retries;
+      const isNetworkError = err.message.includes('Failed to fetch') || 
+                            err.message.includes('ERR_NETWORK_CHANGED') ||
+                            err.message.includes('NetworkError');
+      
+      console.warn(`API fetch attempt ${attempt}/${retries} failed:`, err.message);
+      
+      if (isLastAttempt) {
+        return { ok: false, status: 0, error: err.message || String(err) };
+      }
+      
+      // فقط أعد المحاولة للأخطاء الشبكية
+      if (isNetworkError) {
+        const backoffDelay = delay * Math.pow(2, attempt - 1);
+        console.log(`Retrying in ${backoffDelay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, backoffDelay));
+      } else {
+        // للأخطاء الأخرى، لا تعيد المحاولة
+        return { ok: false, status: 0, error: err.message || String(err) };
+      }
+    }
   }
 }
-async function apiPost(payload) {
+async function apiPost(payload, retries = 3) {
   try {
     if (payload instanceof FormData) {
-      return await apiFetch(API_URL, { method: 'POST', body: payload });
+      return await apiFetch(API_URL, { method: 'POST', body: payload }, retries);
     }
     if (typeof payload === 'object' && payload !== null) {
       const form = new FormData();
@@ -69,9 +90,9 @@ async function apiPost(payload) {
         if (v !== null && typeof v === 'object') form.append(k, JSON.stringify(v));
         else form.append(k, v === undefined ? '' : v);
       }
-      return await apiFetch(API_URL, { method: 'POST', body: form });
+      return await apiFetch(API_URL, { method: 'POST', body: form }, retries);
     }
-    return await apiFetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: String(payload) });
+    return await apiFetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: String(payload) }, retries);
   } catch (err) {
     return { ok: false, status: 0, error: err.message || String(err) };
   }
@@ -896,7 +917,7 @@ function getLoggedPlace() { try { const raw = localStorage.getItem('khedmatak_pl
 function setLoggedPlace(obj) { try { localStorage.setItem('khedmatak_place', JSON.stringify(obj)); } catch (e) {} }
 function clearLoggedPlace() { localStorage.removeItem('khedmatak_place'); }
 
-async function setLoggedInUI(place) {
+async function setLoggedInUI(place, skipRefresh = false) {
   const loginBtn = document.getElementById('loginBtn'); const logoutBtn = document.getElementById('logoutBtn'); const loggedInUser = document.getElementById('loggedInUser');
   if (loginBtn) loginBtn.style.display = 'none'; if (logoutBtn) logoutBtn.style.display = 'inline-block'; if (loggedInUser) { loggedInUser.style.display = 'inline-block'; loggedInUser.textContent = (place && place.name) ? place.name : 'صاحب المحل'; }
   const loginModal = document.getElementById('loginModal'); if (loginModal) loginModal.style.display = 'none';
@@ -914,13 +935,15 @@ async function setLoggedInUI(place) {
   } catch (e) { console.warn('could not show status bar', e); }
   updateActivateButtonState();
 
-  // تحديث تلقائي للبيانات بعد 2 ثانية من تسجيل الدخول
-  setTimeout(async () => {
-    await forceRefreshPlaceData(false); // تحديث صامت بدون رسائل
-  }, 2000);
+  // تحديث تلقائي للبيانات بعد 2 ثانية من تسجيل الدخول (فقط عند تسجيل الدخول الأولي)
+  if (!skipRefresh) {
+    setTimeout(async () => {
+      await forceRefreshPlaceData(false); // تحديث صامت بدون رسائل
+    }, 2000);
 
-  // بدء التحديث التلقائي الدوري
-  startAutoRefresh();
+    // بدء التحديث التلقائي الدوري
+    startAutoRefresh();
+  }
 }
 
 function setLoggedOutUI() {
@@ -1341,13 +1364,21 @@ function startPackageStatusCountdown(endDate, countdownEl) {
   
   clearInterval(packageStatusCountdownTimer);
   
+  let lastUpdate = 0;
+  let lastText = '';
+  let lastClass = '';
+  
   function updateCountdown() {
     const now = new Date();
     const diff = endDate.getTime() - now.getTime();
     
     if (diff <= 0) {
-      countdownEl.textContent = 'انتهت';
-      countdownEl.className = 'package-countdown-display countdown-crit';
+      if (lastText !== 'انتهت' || lastClass !== 'package-countdown-display countdown-crit') {
+        countdownEl.textContent = 'انتهت';
+        countdownEl.className = 'package-countdown-display countdown-crit';
+        lastText = 'انتهت';
+        lastClass = 'package-countdown-display countdown-crit';
+      }
       clearInterval(packageStatusCountdownTimer);
       return;
     }
@@ -1372,21 +1403,33 @@ function startPackageStatusCountdown(endDate, countdownEl) {
       countdownText = `متبقي ${minutes} دقيقة`;
     }
     
-    countdownEl.textContent = countdownText;
-    
     // تحديث الألوان حسب الوقت المتبقي
-    countdownEl.className = 'package-countdown-display';
+    let newClass = 'package-countdown-display';
     if (days <= 2) {
-      countdownEl.classList.add('countdown-crit');
+      newClass += ' countdown-crit';
     } else if (days <= 7) {
-      countdownEl.classList.add('countdown-warn');
+      newClass += ' countdown-warn';
     } else {
-      countdownEl.classList.add('countdown-ok');
+      newClass += ' countdown-ok';
+    }
+    
+    // تحديث DOM فقط عند تغيير النص أو الكلاس
+    if (lastText !== countdownText) {
+      countdownEl.textContent = countdownText;
+      lastText = countdownText;
+    }
+    
+    if (lastClass !== newClass) {
+      countdownEl.className = newClass;
+      lastClass = newClass;
     }
   }
   
   updateCountdown();
-  packageStatusCountdownTimer = setInterval(updateCountdown, 60 * 1000); // تحديث كل دقيقة
+  
+  // تحديث كل دقيقة، أو كل 30 ثانية إذا كان الوقت المتبقي أقل من ساعة
+  const updateInterval = (endDate.getTime() - Date.now()) < 60 * 60 * 1000 ? 30 * 1000 : 60 * 1000;
+  packageStatusCountdownTimer = setInterval(updateCountdown, updateInterval);
 }
 
 function showPlaceStatusBar(place) {
@@ -2151,19 +2194,27 @@ async function forceRefreshPlaceData(showLoading = true) {
   try {
     const fetched = await fetchPlace(logged.id);
     if (fetched) {
-      await setLoggedInUI(fetched);
+      // استخدام skipRefresh=true لمنع الحلقة اللانهائية
+      await setLoggedInUI(fetched, true);
+      consecutiveFailures = 0; // إعادة تعيين عداد الأخطاء عند النجاح
+      lastSuccessfulRefresh = Date.now();
       if (showLoading) {
         showSuccess('تم تحديث البيانات من الخادم');
       }
     } else {
+      consecutiveFailures++;
       if (showLoading) {
         showError('فشل في تحديث البيانات من الخادم');
       }
+      throw new Error('Failed to fetch place data');
     }
   } catch (err) {
+    consecutiveFailures++;
+    console.error('Error refreshing place data:', err);
     if (showLoading) {
       showError('خطأ في تحديث البيانات: ' + err.message);
     }
+    throw err; // إعادة رمي الخطأ للتعامل معه في startAutoRefresh
   } finally {
     if (showLoading) {
       showPackageLoading(false);
@@ -2180,6 +2231,12 @@ function showPackageLoading(show) {
   if (loading2) loading2.style.display = show ? 'block' : 'none';
 }
 
+// متغيرات لإدارة حالة الشبكة
+let consecutiveFailures = 0;
+let lastSuccessfulRefresh = Date.now();
+const MAX_CONSECUTIVE_FAILURES = 5;
+const MIN_REFRESH_INTERVAL = 30000; // 30 ثانية كحد أدنى
+
 // دالة لبدء التحديث التلقائي
 function startAutoRefresh() {
   if (autoRefreshInterval) {
@@ -2188,8 +2245,26 @@ function startAutoRefresh() {
   
   autoRefreshInterval = setInterval(async () => {
     const logged = getLoggedPlace();
-    if (logged && logged.id) {
+    if (!logged || !logged.id) return;
+    
+    // تحقق من عدد المحاولات الفاشلة المتتالية
+    if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+      const timeSinceLastSuccess = Date.now() - lastSuccessfulRefresh;
+      if (timeSinceLastSuccess < MIN_REFRESH_INTERVAL) {
+        console.log('Skipping refresh due to consecutive failures');
+        return;
+      }
+      // إعادة تعيين العداد بعد فترة من الزمن
+      consecutiveFailures = 0;
+    }
+    
+    try {
       await forceRefreshPlaceData(false); // تحديث صامت
+      consecutiveFailures = 0; // إعادة تعيين العداد عند النجاح
+      lastSuccessfulRefresh = Date.now();
+    } catch (err) {
+      consecutiveFailures++;
+      console.warn(`Auto refresh failed (${consecutiveFailures}/${MAX_CONSECUTIVE_FAILURES}):`, err.message);
     }
   }, AUTO_REFRESH_INTERVAL);
 }
@@ -2201,6 +2276,23 @@ function stopAutoRefresh() {
     autoRefreshInterval = null;
   }
 }
+
+// دالة لتنظيف جميع المؤقتات
+function cleanupAllTimers() {
+  if (autoRefreshInterval) {
+    clearInterval(autoRefreshInterval);
+    autoRefreshInterval = null;
+  }
+  if (packageStatusCountdownTimer) {
+    clearInterval(packageStatusCountdownTimer);
+    packageStatusCountdownTimer = null;
+  }
+  // إضافة أي مؤقتات أخرى هنا
+}
+
+// تنظيف المؤقتات عند إغلاق الصفحة
+window.addEventListener('beforeunload', cleanupAllTimers);
+window.addEventListener('unload', cleanupAllTimers);
 
 // دالة لفحص البيانات المحفوظة محلياً
 function debugStoredData() {
@@ -2630,4 +2722,3 @@ function updateInlinePackageInfoCard(place) {
     console.warn('updateInlinePackageInfoCard error', e);
   }
 }
-
